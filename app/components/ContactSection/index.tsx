@@ -13,9 +13,24 @@ const ContactSection = () => {
           via any of the details below. Thank you.
         </p>
         <div className="contact-info">
-          <LinkButton to="" color="gold" label="Email me" width="medium" />
+          <LinkButton
+            to="https://adeltadjerouni.com/resumev5.1.5pdf"
+            download
+            label="Download my resume"
+            width="medium"
+            leftIcon="bx-file-find"
+          />
           <span>Or</span>
           <ul>
+            <li>
+              <a
+                href="mailto:mohnagato@gmail.com"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <i className="bx bxl-gmail"></i>
+              </a>
+            </li>
             <li>
               <a
                 rel="noreferrer"
@@ -33,6 +48,15 @@ const ContactSection = () => {
                 rel="noreferrer"
               >
                 <i className="bx bxl-github" />
+              </a>
+            </li>
+            <li>
+              <a
+                href="https://twitter.com/TadjerouniAdel"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <i className="bx bxl-twitter" />
               </a>
             </li>
             <li>

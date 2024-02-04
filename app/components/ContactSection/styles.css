@@ -53,6 +53,9 @@
     display: flex;
     gap:20px;
 }
+.contact .content .contact-info >ul li a i{
+    transition: 0.3s;
+}
 .contact .content .contact-info >ul li a{
     width: 60px;
     height: 60px;
@@ -60,9 +63,29 @@
     border-radius: 8px;
     display: flex;
     justify-content: center;
+    transition: 0.3s;
+    cursor: pointer;
     align-items: center;
     font-size: 30px;
     color: #fff;
+}
+.contact .content .contact-info >ul li:hover a{
+    transform: scale(1.1);
+}
+.contact .content .contact-info >ul li:hover a i.bxl-gmail{
+    color: #EA4335;
+}
+.contact .content .contact-info >ul li:hover a i.bxl-twitter{
+    color: #1DA1F2;
+}
+.contact .content .contact-info >ul li:hover a i.bxl-linkedin{
+    color: #0A66C2;
+}
+.contact .content .contact-info >ul li:hover a i.bxl-skype{
+    color: #0A66C2;
+}
+.contact .content .contact-info >ul li:hover a i.bxl-github{
+    color: var(--gray-color);
 }
 
 .contact .imgBox{
@@ -176,7 +199,6 @@ transform: rotate(-129deg);
     padding:12px 14px;
     height: 45px;
     font-size: 14px;
-
    }
     .contact .content .contact-info span:nth-child(2){
         font-style: normal;
@@ -191,8 +213,8 @@ transform: rotate(-129deg);
         gap:20px;
     }
     .contact .content .contact-info >ul li a{
-        width: 60px;
-        height: 60px;
+        width: 50px;
+        height: 50px;
         background-color: #1b1b1b;
         border-radius: 8px;
         display: flex;
@@ -206,6 +228,7 @@ transform: rotate(-129deg);
         width: 280px;
         height: 283px;
         position: relative;
+        top: -50px;
     }
     .contact .imgBox img{
         position: absolute;
@@ -291,8 +314,11 @@ transform: rotate(-129deg);
         font-size: 28px;
         color: #FFFFFF;
     }
+    .contact .content .contact-info{
+        gap: 30px;
+    }
 }
-@media(max-width:464px){
+@media(max-width:570px){
     
     
     .contact .imgBox{
@@ -306,11 +332,18 @@ transform: rotate(-129deg);
         justify-content: center;
     }
     .contact .content .contact-info{
-        gap: 30px;
+        gap: 20px;
+    }
+    .contact .content .contact-info >ul{
+        gap: 10px;
     }
     .contact .content .contact-info >ul li a{
         width: 40px;
         height: 40px;
         font-size: 20px;
     }
+    .contact .content .contact-info{
+        flex-direction: column;
+    }
+   
 }

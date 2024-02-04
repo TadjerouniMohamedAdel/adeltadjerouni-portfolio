@@ -40,6 +40,14 @@ const Navbar: React.FC = () => {
           </ul>
           <div className="links">
             <a
+              href="mailto:mohnagato@gmail.com"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <i className="bx bxl-gmail"></i>
+            </a>
+
+            <a
               rel="noreferrer"
               href="https://www.linkedin.com/in/adel-mohamed-tadjerouni"
               target="_blank"
@@ -54,6 +62,15 @@ const Navbar: React.FC = () => {
             >
               <i className="bx bxl-github" />
             </a>
+
+            <a
+              href="https://twitter.com/TadjerouniAdel"
+              target="_blank"
+              rel="noreferrer"
+            >
+              <i className="bx bxl-twitter" />
+            </a>
+
             <a
               href="https://join.skype.com/invite/afq6nmhgxMgr"
               target="_blank"

@@ -203,7 +203,7 @@ display: none
         width: 100%;
     }
     .drawer .links a{
-        font-size: 32px;
+        font-size: 28px;
     }
 }
 @media(max-width:410px) {
