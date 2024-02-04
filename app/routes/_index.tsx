@@ -141,10 +141,10 @@ export default function Index() {
               <ProjectItem project={project} key={project.id} />
             ))}
           </div>
-          <LinkButton to="/projects" label="Explore my projects" />
+          <LinkButton to="/projects" label="See more projects" />
         </section>
         <section className="companies">
-          <h2>Company that i work with</h2>
+          <h2>Companies that i worked with:</h2>
           <ul>
             <li>
               <img src="/images/bea_logo.png" alt="" />

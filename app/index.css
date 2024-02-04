@@ -291,6 +291,7 @@ main.home > section.companies{
 }
 .home .companies ul{
     display: flex;
+    list-style: none;
     gap: 100px;
     margin-top:67px;
 

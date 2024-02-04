@@ -51,6 +51,7 @@
 
 .contact .content .contact-info >ul{
     display: flex;
+    list-style: none;
     gap:20px;
 }
 .contact .content .contact-info >ul li a i{
