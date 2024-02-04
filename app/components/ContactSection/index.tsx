@@ -14,7 +14,7 @@ const ContactSection = () => {
         </p>
         <div className="contact-info">
           <LinkButton
-            to="https://adeltadjerouni.com/resumev5.1.5pdf"
+            to="https://adeltadjerouni.com/resume-v5.1.5.pdf"
             download
             label="Download my resume"
             width="medium"
