@@ -1,0 +1,212 @@
+
+ .project{
+    display: flex;
+    flex-direction: column;
+    gap:18px;
+    text-decoration: none;
+    width: 520px;
+
+}
+ .project .imgContainer{
+    position: relative;
+    width: 100%;
+    height: 317px;
+    border-radius: 20px;
+    background: #8E2DE2;  /* fallback for old browsers */
+background: -webkit-linear-gradient(to right, #4A00E0, #8E2DE2);  /* Chrome 10-25, Safari 5.1-6 */
+background: linear-gradient(to right, #4A00E0, #8E2DE2); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+
+}
+.project .imgContainer.docta{
+    
+  background: #00d2ff; /* fallback for old browsers */
+  background: -webkit-linear-gradient(to right, #00d2ff, #3a7bd5); /* Chrome 10-25, Safari 5.1-6 */
+  background: linear-gradient(to right, #00d2ff, #3a7bd5); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    
+}
+.project .imgContainer.scalexp{
+    background: #232526;  /* fallback for old browsers */
+    background: -webkit-linear-gradient(to right, #414345, #232526);  /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to right, #414345, #232526); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    
+}
+.project .imgContainer.emploipartner{
+    background: #ffd89b;  /* fallback for old browsers */
+    background: -webkit-linear-gradient(to right, #19547b, #ffd89b);  /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to right, #19547b, #ffd89b); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    
+}
+
+.project .imgContainer.eenar{
+    background: #636363;  /* fallback for old browsers */
+background: -webkit-linear-gradient(to right, #a2ab58, #636363);  /* Chrome 10-25, Safari 5.1-6 */
+background: linear-gradient(to right, #a2ab58, #636363); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+
+}
+.project .imgContainer.pass{
+    background: #00416A;  /* fallback for old browsers */
+background: -webkit-linear-gradient(to right, #E4E5E6, #00416A);  /* Chrome 10-25, Safari 5.1-6 */
+background: linear-gradient(to right, #E4E5E6, #00416A); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+
+}
+.project .imgContainer.khedemni{
+    background: #DAE2F8;  /* fallback for old browsers */
+background: -webkit-linear-gradient(to right, #D6A4A4, #DAE2F8);  /* Chrome 10-25, Safari 5.1-6 */
+background: linear-gradient(to right, #D6A4A4, #DAE2F8); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+
+}
+.project .imgContainer.buileo{
+    background: #0F2027;  /* fallback for old browsers */
+    background: -webkit-linear-gradient(to right, #2C5364, #203A43, #0F2027);  /* Chrome 10-25, Safari 5.1-6 */
+    background: linear-gradient(to right, #2C5364, #203A43, #0F2027); /* W3C, IE 10+/ Edge, Firefox 16+, Chrome 26+, Opera 12+, Safari 7+ */
+    
+}
+
+ .project .imgContainer img{
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%,-50%);
+    border-radius: inherit;
+    width: 40%;
+    height: 40%;
+    object-fit: contain;
+}
+.project .imgContainer.buileo img{
+    width: 25%;
+    height: 25%;
+}
+
+ .project ul{
+    display: flex;
+    gap:10px;
+    justify-content: flex-start;
+}
+ .project ul li{
+    padding: 0 14px;
+    height: 28px;
+    background: linear-gradient(180deg, rgba(65, 85, 114, 0.15) 0%, rgba(27, 27, 30, 0.1) 100%);
+    border: 1px solid rgba(65, 85, 114, 0.5);
+    border-radius: 20px;
+    display: flex;
+    justify-content: center;
+    text-transform: uppercase;
+    align-items: center;
+    font-style: normal;
+    font-weight: 400;
+    font-size: 12px;
+    text-align: center;
+    color: var(--yellow-color);
+}
+
+ .project h3{
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+    color: #FFFFFF;
+}
+ .project h4{
+    font-style: normal;
+    height: 120px;
+    max-height: 80px;
+    font-weight: 700;
+    line-height: 38px;
+
+    font-size: 26px;
+    color: #FFFFFF;
+}
+.project .links{
+    display: flex;
+    gap:20px;
+}
+
+@media(max-width:1220px){
+    .project{
+        width: 400px;    
+    }
+    .project .imgContainer{
+        height: 245px;
+    }
+    .project ul li{
+        font-size: 9px;
+    }
+    .project h3{
+        font-size: 14px;
+    }
+    .project h4{
+        max-height: 65px;
+        font-size: 18px;
+        line-height: 32px;
+        color: #FFFFFF;
+    }
+
+    .project .links a{
+        font-size: 14px ;
+        height: 45px;
+    }
+    .project .links a i{
+        font-size: 18px;
+    }
+}
+
+@media(max-width:880px){
+    .project{
+        width: 350px;    
+    }
+    .project .imgContainer{
+        height: 205px;
+    }
+    .project ul li{
+        font-size: 7px;
+    }
+    .project h3{
+        font-size: 12px;
+    }
+    .project h4{
+        max-height: 55px;
+        font-size: 16px;
+        line-height: 25px;
+        color: #FFFFFF;
+    }
+
+    .project .links a{
+        font-size: 14px ;
+        height: 45px;
+    }
+    .project .links a i{
+        font-size: 18px;
+    }
+}
+
+@media(max-width:400px){
+    .project{
+        width: 300px;    
+    }
+    .project .imgContainer{
+        height: 180px;
+    }
+    .project ul{
+        gap: 6px;
+    }
+    .project ul li{
+        font-size: 6px;
+    }
+    .project h3{
+        font-size: 12px;
+    }
+    .project h4{
+        max-height: 40px;
+        font-size: 14px;
+        line-height: 20px;
+        color: #FFFFFF;
+    }
+
+    .project .links a{
+        padding:8px 12x;
+        height: 40px;
+        font-size: 12px;
+    }
+    .project .links a i{
+        font-size: 14px;
+    }
+ }

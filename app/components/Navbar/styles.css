@@ -1,0 +1,213 @@
+/* navbar styles */
+nav{
+    height: 88px;
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 54px;
+    z-index: 100;
+    background-color: var(--primary-black-color);
+}
+nav.open-drawer + *{
+    overflow: hidden;
+    height: calc(100vh - 90px);
+}
+.backdrop{
+    transition: 0.5s;
+    display: none;
+    opacity: 0;
+    right: -100vw;    
+    z-index: -1;
+}
+.drawer{
+    position: absolute;
+    width: 60vw;
+    height: calc(100vh);
+    transition: .3s;
+    background-color: #3a445388;
+    background-color:#181b21d5;
+    top: 0;
+    right: 0;
+    z-index: 200;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+}
+nav h1{
+
+    font-family: var(--logo-font);
+    font-style: normal;
+    cursor: pointer;
+    font-weight: 400;
+    font-size: 24px;
+    line-height: 150%;
+    display: flex;
+    align-items: center;
+    text-align: right;
+    cursor: pointer;
+    color: #FFFFFF;
+}
+
+nav > ul{
+    display: flex;
+    gap:48px;
+    align-items: center;
+}
+
+nav > ul li{
+    display: flex;
+    justify-content: center;
+    cursor: pointer;
+    align-items: center;
+}
+nav > ul li a{
+    font-family: var(--main-font);
+    font-style: normal;
+    font-weight: 400;
+    font-size: 16px;
+
+    display: flex;
+    align-items: center;
+    text-align: right;
+
+    /* White */
+
+    color: #FFFFFF;
+
+    opacity: 0.7;
+}
+nav > ul li.active{
+    border-bottom:3px solid var(--purple-color);
+    height:40px;
+}
+nav > ul li.active a{
+    opacity: 1;
+}
+nav  > ul li:last-child{
+    height:88px;
+    width: 109px;
+    background-color: var(--purple-color);
+}
+nav > ul li:last-child a{
+    opacity: 1;
+}
+
+nav button{
+    background-color: transparent;
+    border: 1px solid #fff;
+    width:50px;
+    height: 50px;
+    display: none;
+    padding: 0;
+    margin: 0;
+    justify-content: center;
+    align-items: center;
+    color: #fff;
+    font-size: 24px;
+    border-radius: 8px;
+}
+@media(max-width:821px){
+    nav > div:last-child{
+display: none
+    }
+}
+@media(max-width:660px){
+    nav{
+        padding-right: 20px;
+    }
+    nav > ul{
+        display: none
+    }
+    nav button{
+        display: flex;
+    }
+    .backdrop{
+        position: fixed;
+        display: block;
+        top: 0;
+        overflow: hidden;
+        width: 100vw;
+        height: 100vh;
+        backdrop-filter: blur(5px);
+    }
+    .backdrop.open{
+        opacity: 1;
+        right: 0;
+        z-index: 200;
+
+    }
+   
+    .drawer .drawer-header{
+        height: 80px;
+        width: 100%;
+        padding: 0 20px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+    }
+    .drawer .drawer-header h1{
+        color: #fff;
+    }
+    .drawer .drawer-header button{
+        background-color: transparent;
+        border: 2px solid #fff;
+        width:50px;
+        height: 50px;
+        display: flex;
+        padding: 0;
+        margin: 0;
+        justify-content: center;
+        align-items: center;
+        color: #fff;
+        font-size: 26px;
+        border-radius: 8px;
+    }
+    .drawer  ul{
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        padding-top:40px ;
+        padding-left: 30px;
+    }
+    .drawer  ul li{
+        color: #fff;
+        font-weight: 600;
+        font-size: 22px;
+    }
+    .drawer  hr{
+        width: 100%;
+        height: 2px;
+        border: 1px solid #fff;
+    }
+
+    .drawer ul{
+        list-style: none;
+
+    }
+    .drawer .links{
+        padding: 40px 20px;
+        display: flex;
+        justify-content: center;
+        width: 100%;
+        gap: 20px;
+        padding-bottom: 15px;
+    }
+    .drawer span{
+        position: absolute;
+        bottom: 20px;
+        display: flex;
+        justify-content: center;
+        font-size: 16px;
+        font-weight: 300;
+        width: 100%;
+    }
+    .drawer .links a{
+        font-size: 32px;
+    }
+}
+@media(max-width:410px) {
+    .drawer{
+        width: 75vw;
+    }
+}

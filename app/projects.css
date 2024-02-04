@@ -1,0 +1,41 @@
+
+main.projects-list h1{
+    color: var(--White, #FFF);
+    text-align: center;
+    font-family: Sen;
+    font-size: 48px;
+    margin-top: 50px;
+    font-style: normal;
+    font-weight: 700;
+    line-height: normal;
+    text-align: center;
+    position: relative;
+    left: 50%;
+    transform: translateX(-50%);
+}
+
+.projects-list .projects{
+        width: 100%;
+        margin-top: 60px;
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+        gap: 120px 40px;
+}
+
+@media(max-width:1220px){
+    main.projects-list h1{
+        font-size: 38px;
+    }
+}
+@media(max-width:800px){
+    main.projects-list h1{
+        font-size:30px;
+    
+    }
+}
+@media(max-width:450px){
+    main.projects-list h1{
+        font-size:22px;
+    } 
+}
