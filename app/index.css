@@ -149,7 +149,7 @@
         max-width: 500px;
     }
     .home .presentation .content h1{
-        font-size: 30px;
+        font-size: 28px;
         line-height: 40px;
     }
     
@@ -355,7 +355,8 @@ main.home > section.companies{
 }
 @media(max-width:400px){
     .home .companies h2{
-        font-size: 30px ;
+        font-size: 28px;
+        padding: 0 8px;
     }
     .home .companies ul li{
         width: 50.31px;

@@ -144,19 +144,39 @@ export default function Index() {
           <LinkButton to="/projects" label="See more projects" />
         </section>
         <section className="companies">
-          <h2>Companies that i worked with:</h2>
+          <h2>Companies that I worked with:</h2>
           <ul>
             <li>
-              <img src="/images/bea_logo.png" alt="" />
+              <a href="https://www.bea.dz/" target="_blank" rel="noreferrer">
+                <img src="/images/bea_logo.png" alt="" />
+              </a>
             </li>
             <li>
-              <img src="/images/ep_logo.png" alt="" />
+              <a
+                href="https://www.emploipartner.com/en/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <img src="/images/ep_logo.png" alt="" />
+              </a>
             </li>
             <li>
-              <img src="/images/cleverzone.png" alt="" />
+              <a
+                href="https://www.linkedin.com/company/cleverzoneio/about/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <img src="/images/cleverzone.png" alt="" />
+              </a>
             </li>
             <li>
-              <img src="/images/scalexp.png" alt="" />
+              <a
+                href="https://www.scalexp.com/"
+                target="_blank"
+                rel="noreferrer"
+              >
+                <img src="/images/scalexp.png" alt="" />
+              </a>
             </li>
           </ul>
         </section>

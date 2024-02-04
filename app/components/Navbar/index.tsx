@@ -14,7 +14,9 @@ const Navbar: React.FC = () => {
       >
         <div className="drawer" onClick={(e) => e.stopPropagation()}>
           <div className="drawer-header">
-            <h1>Adel Tadjerouni</h1>
+            <Link to="/">
+              <h1>Adel Tedjerouni</h1>
+            </Link>
             <button onClick={() => setOpenDrawer(false)}>
               <i className="bx bx-x" />
             </button>
@@ -82,7 +84,9 @@ const Navbar: React.FC = () => {
           <span>v1.0.0</span>
         </div>
       </div>
-      <h1>Adel Tedjerouni</h1>
+      <Link to="/">
+        <h1>Adel Tedjerouni</h1>
+      </Link>
       <ul>
         <li className={location.pathname === '/' ? 'active' : ''}>
           <Link to="/">Home</Link>
