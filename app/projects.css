@@ -1,4 +1,8 @@
-
+main.projects-list .projects{
+    margin-bottom: 60px;
+    background-color: var(--secondary-black-color);
+    padding: 40px 20px;
+}
 main.projects-list h1{
     color: var(--White, #FFF);
     text-align: center;
