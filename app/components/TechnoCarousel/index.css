@@ -1,11 +1,14 @@
 .tech-swiper{
     width: 100%;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
 }
 .tech-swiper .swiper-wrapper{
     transition-timing-function : linear;
 }
 .tech-swiper .swiper-slide{
-    width: 220px;
+    width: 230px;
     height: 70px;
     display: flex;
     justify-content: center;
@@ -45,6 +48,9 @@
     }
 }
 @media(max-width:800px){
+    .tech-swiper{
+        gap: 12px;
+    }
     .tech-swiper .swiper-slide{
         width: 150px;
         height: 40px;
@@ -65,6 +71,9 @@
     }
 }
 @media(max-width:450px){
+    .tech-swiper{
+        gap: 8px;
+    }
     .tech-swiper .swiper-slide{
         width: 100px;
         height: 32px;
