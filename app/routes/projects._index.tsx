@@ -12,9 +12,9 @@ export const links: LinksFunction = () => [
 export const meta: MetaFunction = () => {
   const title = 'Adel Tadjerouni Projects';
   const description =
-    'Adel Tadjerouni personal website with projects, skills and contact informations';
+    'Adel Mohamed Tadjerouni personal website with projects, skills and contact informations';
   const previewImage = 'https://nagatodev.netlify.app/images/amt2.png';
-  const previewImageAlt = 'Adel Tadjerouni website preview';
+  const previewImageAlt = 'Adel Mohamed Tadjerouni website preview';
   const twitterUsername = '@TadjerouniAdel';
 
   return [
