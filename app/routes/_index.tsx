@@ -9,6 +9,7 @@ import LinkButton from '~/components/LinkButton';
 import { Autoplay, FreeMode } from 'swiper/modules';
 import { projects } from '../content';
 import ContactSection from '~/components/ContactSection';
+import Intro from '~/components/Intro';
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: indexcss },
@@ -129,9 +130,7 @@ export default function Index() {
             </div>
           </div>
           <div className="imgBox">
-            <div>
-              <img src="/images/profile.png" alt="" />
-            </div>
+            <Intro />
           </div>
         </section>
         <section className="latest-projects">

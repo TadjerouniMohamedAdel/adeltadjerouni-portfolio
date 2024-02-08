@@ -3,8 +3,9 @@
 .home .presentation{
     height: calc(100vh - 88px);
     width: 100%;
-    padding: 0;
+    padding: 40px;
     justify-content: center;
+    overflow: hidden;
     align-items: center;
     display: flex;
     margin-bottom: 120px;
@@ -44,31 +45,9 @@
     margin-top:40px;
 }
 
-.home .presentation .imgBox{
-    width: 385px;
-    height: 431px;
-    background: radial-gradient(50% 50% at 50% 50%, #763CAC 0%, rgba(50, 15, 133, 0) 100%);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    
-}
 
-.home .presentation .imgBox > div{
-    width: 258px;
-    height: 259px;
-    background: radial-gradient(50% 50% at 50% 50%, #ffffff84 17.71%, rgba(67, 67, 67, 0) 100%);
-    position: relative;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    
-}
-.home .presentation .imgBox > div >img{
-    position: absolute;
-    width: 165px;
-    height: 223px;
-}
+
+
 
 @media(max-width:1220px){
     .home .presentation .content{
@@ -88,10 +67,7 @@
         padding: 0 40px ;
         padding-right: 0;
     }
-    .home .presentation .imgBox{
-       transform: scale(0.8);
-        
-    }
+   
     
     
     .home .presentation .content{
@@ -117,32 +93,41 @@
 @media(max-width:700px){
     .home .presentation{
         padding: 0 40px ;
+        flex-direction: column-reverse;
+        justify-content: flex-end;
+        height: auto;
+        gap: 30px;
+        overflow: visible;
+
+
     }
-    .home .presentation .imgBox{
-        display: none;
-    }
+
     
     
     .home .presentation .content{
         max-width: 500px;
+
     }
     .home .presentation .content h1{
-        font-size: 36px;
-        line-height: 49px;
+        font-size: 30px;
+        line-height: 130%;
     }
     
     .home .presentation .content p{
+        margin-top: 20px;
         font-size: 15px;
+    }
+    .home .presentation .content > div{
+        margin-top: 20px;
     }
 }
 
 @media(max-width:400px){
     .home .presentation{
         padding: 0 40px ;
+        hei
     }
-    .home .presentation .imgBox{
-        display: none;
-    }
+    
     
     
     .home .presentation .content{

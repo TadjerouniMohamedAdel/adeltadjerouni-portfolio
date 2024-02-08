@@ -1,0 +1,129 @@
+.div-wave{
+    position: relative;
+    width: 500px;
+    height:500px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+  }
+  
+  .div-wave span:nth-child(1){
+    position: absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    border:2px solid #5221e685;
+    border-radius: 38% 62% 63% 37% / 41% 44% 56% 59%;
+    transition:0.5s;
+    animation: animateDiveWaves 6s linear infinite; 
+  }
+  
+  
+  
+  .div-wave span:nth-child(2){
+    position: absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    border:2px solid #5221e685;
+    border-radius: 38% 62% 63% 37% / 41% 44% 56% 59%;
+    transition:0.5s;
+    animation: animateDiveWaves2 4s linear infinite;
+  }
+  
+  
+  .div-wave span:nth-child(3){
+    position: absolute;
+    top:0;
+    left:0;
+    width:100%;
+    height:100%;
+    border:2px solid #5221e685;
+    border-radius: 38% 62% 63% 37% / 41% 44% 56% 59%;
+    transition:0.5s;
+    animation: animateDiveWaves 10s linear infinite;
+  }
+  
+
+  
+  @keyframes animateDiveWaves{
+    0%{
+        transform: rotate(0deg);
+    }
+    100%{
+        transform: rotate(360deg);
+    }
+  }
+  @keyframes animateDiveWaves2{
+    0%{
+        transform: rotate(360deg);
+    }
+    100%{
+        transform: rotate(0deg);
+    }
+  }
+  .div-wave .content{
+   position: relative;
+   padding: 40px 60px;
+   color:#fff;
+   text-align: center;
+   transition:0.5s;
+   z-index:100;
+  }
+  
+  .div-wave .content a.readmore{
+    
+    border-radius: 73% 27% 44% 56% / 49% 44% 56% 51%;
+  }
+  .div-wave .content a.link{
+    position: relative;
+    display: inline-block;
+    margin-top: 10px;
+    border: 2px solid #5221e685;
+    padding:11px 18px;
+    text-decoration: none;
+    background-color: #07409b;
+    color:#fff;    
+    font-weight: 600;
+    margin-bottom: 5px;
+    margin-right: 10px;
+    transition: 0.5s;
+  }
+  .div-wave .content a.getcv{    
+    border-radius:  44% 56% 73% 27% /  56% 51% 49% 44%;
+  }
+  
+  
+  .div-wave .content h2{
+    color:#fff;
+  
+  }
+  .div-wave .content p{
+    color: #fff;
+  }
+  .div-wave .content p i{
+    margin-left: 10px;
+    margin-right: 10px;
+  }
+
+  @media(max-width:1220px){
+    .div-wave{
+        width: 400px;
+        height:400px;
+      }
+  }
+
+  @media(max-width:860px){
+    .div-wave{
+        width: 300px;
+        height:300px;
+      }
+  }
+  @media(max-width:700px){
+    .div-wave{
+        width: 220px;
+        height:220px
+    }
+  }
