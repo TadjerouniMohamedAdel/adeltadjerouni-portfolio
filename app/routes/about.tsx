@@ -8,10 +8,10 @@ export const links: LinksFunction = () => [
 ];
 
 export const meta: MetaFunction = () => {
-  const title = 'Adel Tadjerouni Aboutme';
+  const title = 'Adel Mohamed Tadjerouni Aboutme';
   const description =
     'Adel Mohamed Tadjerouni personal website with projects, skills and contact informations';
-  const previewImage = 'https://nagatodev.netlify.app/images/amt2.png';
+  const previewImage = 'https://adeltadjerouni.com/favicon.png';
   const previewImageAlt = 'Adel Mohamed Tadjerouni website preview';
   const twitterUsername = '@TadjerouniAdel';
 
@@ -190,8 +190,8 @@ export default function Index() {
             </div>
           </div>
         </section>
-        <ContactSection />
       </main>
+      <ContactSection />
     </>
   );
 }

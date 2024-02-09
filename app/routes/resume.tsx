@@ -23,10 +23,10 @@ export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: experiencecarouselcss },
 ];
 export const meta: MetaFunction = () => {
-  const title = 'Adel Tadjerouni Resume';
+  const title = 'Adel Mohamed Tadjerouni Resume';
   const description =
     'Adel Mohamed Tadjerouni personal website with projects, skills and contact informations';
-  const previewImage = 'https://nagatodev.netlify.app/images/amt2.png';
+  const previewImage = 'https://adeltadjerouni.com/favicon.png';
   const previewImageAlt = 'Adel Mohamed Tadjerouni website preview';
   const twitterUsername = '@TadjerouniAdel';
 
@@ -149,10 +149,8 @@ export default function Index() {
             </ul>
           </div>
         </section>
-        <section>
-          <ContactSection />
-        </section>
       </main>
+      <ContactSection />
     </>
   );
 }

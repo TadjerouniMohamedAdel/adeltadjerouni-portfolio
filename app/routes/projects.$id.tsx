@@ -24,10 +24,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
   return json({ project: projects.find((proj) => proj.id === params.id)! });
 };
 export const meta: MetaFunction = () => {
-  const title = 'Adel Tadjerouni Projects';
+  const title = 'Adel Mohamed Tadjerouni Projects';
   const description =
     'Adel Mohamed Tadjerouni personal website with projects, skills and contact informations';
-  const previewImage = 'https://nagatodev.netlify.app/images/amt2.png';
+  const previewImage = 'https://adeltadjerouni.com/favicon.png';
   const previewImageAlt = 'Adel Mohamed Tadjerouni website preview';
   const twitterUsername = '@TadjerouniAdel';
 
@@ -205,8 +205,8 @@ const ProjectItemPage = () => {
           <h3>Technologies:</h3>
           <TechnoCarousel skills={project.technologies} />
         </section>
-        <ContactSection />
       </main>
+      <ContactSection />
     </>
   );
 };

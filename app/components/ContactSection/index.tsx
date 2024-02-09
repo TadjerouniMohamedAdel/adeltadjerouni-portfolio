@@ -2,7 +2,7 @@ import LinkButton from '../LinkButton';
 import './styles.css';
 const ContactSection = () => {
   return (
-    <section className="contact">
+    <footer className="contact">
       <div className="content">
         <h2>Hi, Let us talk business </h2>
         <p>
@@ -78,7 +78,7 @@ const ContactSection = () => {
         <div className="gray-square"></div>
         <div className="red-circle"></div>
       </div>
-    </section>
+    </footer>
   );
 };
 
