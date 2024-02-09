@@ -765,18 +765,22 @@ color: #FFFFFF;
         color: #FFFFFF;   
     }
     .career{
-        display: block;        
+        display: flex;  
+        flex-direction: column;
+        gap: 40px;      
         position: relative;
+        width: 100vw;
         overflow: hidden;
+        padding: 40px 0;
+        background-color: #010101d9;
+
     }
     .career .content{
         z-index: 100;
-        width: 100vw;
-        height: 100vh;
+        height: auto;
         display: flex;
         flex-direction: column;
         justify-content: center;
-        background-color: #010101d9;
     }
     .career .content h2{
         font-style: normal;
@@ -795,47 +799,52 @@ color: #FFFFFF;
     max-width: 548px;
         color: #FFFFFF;
     }
+    .career{
+        display: flex ;        
+        flex-direction: column ;
+        
+    }
     
     .career .images{
         display: flex;
-        left: 0;
-        top: 0;
-        z-index: -1;
-        position: absolute;
-        justify-content: center;
+        flex-direction: row;
+        position: relative;
+        top: unset ;
+        left: unset ;
         min-width: 100vw;
+        justify-content: center;
         height: 100%;
         flex-wrap: wrap;
-        gap: 20px;
+        gap: 30px;
     }
     
     .career .images div:first-child{
         position: relative;
-        top: -2px;
+        top: 0;
         width: 367px;
     height: 200px;
     }
     .career .images div:nth-child(2){
         position: relative;
-        top: 25px;
+        top: 0;
         width: 170px;
     height: 170px;
     }
     .career .images div:nth-child(3){
         position: relative;
-        top: -25px;
+        top: 0;
         width: 250.095px;
     height: 220.095px;
     }
     .career .images div:nth-child(4){
         position: relative;
-        top: 25px;
+        top: 0;
         width: 214.114px;
         height: 214.114px;
     }
     .career .images div:nth-child(5){
         position: relative;
-        top: -25px;
+        top: 0;
         width: 264.114px;
         height: 264.114px;
     }
@@ -1000,14 +1009,13 @@ color: #FFFFFF;
         color: #FFFFFF;   
     }
     .career{
-        display: block;        
-        position: relative;
-        overflow: hidden;
+        display: flex ;        
+        flex-direction: column ;
     }
     .career .content{
         z-index: 100;
         width: 100vw;
-        height: 100vh;
+        height: auto;
         display: flex;
         flex-direction: column;
         padding-right: 20px;
@@ -1034,48 +1042,46 @@ color: #FFFFFF;
     
     .career .images{
         display: flex;
-        left: 0;
-        top: 0;
-        z-index: -1;
-        position: absolute;
+        position: relative;
+        top: unset ;
+        left: unset ;
         justify-content: center;
-        min-width: 100vw;
         height: 100%;
         flex-wrap: wrap;
-        gap: 20px;
+        gap: 30px;
     }
+    
     
     .career .images div:first-child{
         position: relative;
-        top: -2px;
-        width: 367px;
+        top: -0;
+        width: 350px;
     height: 200px;
     }
     .career .images div:nth-child(2){
         position: relative;
-        top: 25px;
-        width: 170px;
-    height: 170px;
+        top: 0;
+
+        width: 300px;
+    height: 300px;
     }
     .career .images div:nth-child(3){
         position: relative;
-        top: -25px;
-        width: 250.095px;
-    height: 220.095px;
+        top: -0;
+        width: 280.095px;
+    height: 280.095px;
     }
     .career .images div:nth-child(4){
         position: relative;
-        top: 25px;
-        width: 214.114px;
-        height: 214.114px;
-        display: none;
+        top: 0;
+        width: 300.114px;
+        height: 300.114px;
     }
     .career .images div:nth-child(5){
         position: relative;
         top: -25px;
         width: 264.114px;
         height: 264.114px;
-        display: none;
     }
     .career .images > div >img{
         position: absolute;
