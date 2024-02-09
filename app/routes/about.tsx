@@ -174,19 +174,34 @@ export default function Index() {
           </div>
           <div className="images">
             <div>
-              <img alt="about pic" src="/images/my-pic/team1.jpg" />
+              <img
+                alt="Adel Mohamed Tadjerouni carrer"
+                src="/images/my-pic/team1.jpg"
+              />
             </div>
             <div>
-              <img alt="about pic" src="/images/my-pic/team3.jpg" />
+              <img
+                alt="Adel Mohamed Tadjerouni career"
+                src="/images/my-pic/team3.jpg"
+              />
             </div>
             <div>
-              <img alt="about pic" src="/images/my-pic/team5.jpg" />
+              <img
+                alt="Adel Mohamed Tadjerouni career"
+                src="/images/my-pic/team5.jpg"
+              />
             </div>
             <div>
-              <img alt="about pic" src="/images/my-pic/team2.jpeg" />
+              <img
+                alt="Adel Mohamed Tadjerouni career"
+                src="/images/my-pic/team2.jpeg"
+              />
             </div>
             <div>
-              <img alt="about pic" src="/images/my-pic/friends.jpg" />
+              <img
+                alt="Adel Mohamed Tadjerouni career"
+                src="/images/my-pic/friends.jpg"
+              />
             </div>
           </div>
         </section>
