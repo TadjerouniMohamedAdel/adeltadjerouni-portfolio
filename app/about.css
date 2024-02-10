@@ -617,15 +617,13 @@ color: #FFFFFF;
 
 @media(max-width:870px){
     .aboutme{
-        display: flex;
         flex-direction: row;
-        padding:0;
-        margin: 0;
         width: 100%;
-        flex-wrap: wrap;
-        height: calc(100vh - 88px + 50px);
+        flex-wrap: nowrap;
         width: 100%;
         position: relative;
+        align-items: center;
+        height: auto;
         z-index:-1;
         
     }
@@ -635,12 +633,11 @@ color: #FFFFFF;
         flex-direction: column;
         align-items: flex-start;
         gap: 20px;
-        background-color: #010101d9;
         padding:50px ;
-        width: 100%;
         z-index: 200;
-        padding-left: 85px;
-        height: calc(100vh - 80px + 30px);
+        height: auto;
+        padding-left: 25px;
+        width: 70%;
         border-bottom-right-radius: 0;
     
     
@@ -660,7 +657,7 @@ color: #FFFFFF;
     .aboutme .content p{
         font-style: normal;
         font-weight: 400;
-        font-size: 18px;
+        font-size: 16px;
         max-width:539px;
         line-height: 160%;
     
@@ -669,11 +666,9 @@ color: #FFFFFF;
     }
   
     .aboutme .imgBox{
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: calc(100vh - 80px + 30px);
+        position: relative;
+        top: unset;
+        border-radius: 20px;
     }
     .aboutme .imgBox img{
         width: 100%;
@@ -681,9 +676,8 @@ color: #FFFFFF;
         position: absolute;
         top: 0;
         left: 0;
-        border-radius: 0;
+        border-radius: inherit;
         object-fit: cover;
-        object-position: 100% 30%; /* even if we dont declare this the image will still be centered */
     }
     
     .education{
@@ -860,15 +854,13 @@ color: #FFFFFF;
 @media(max-width:620px){
     .aboutme{
         display: flex;
+        flex-direction: column;
         align-items: center;
         padding:0;
         margin: 0;
         width: 100%;
-        flex-wrap: wrap;
-        height: calc(100vh - 88px + 50px);
         width: 100%;
         position: relative;
-        z-index:-1;
         
     }
     
@@ -878,9 +870,8 @@ color: #FFFFFF;
         align-items: flex-start;
         justify-content: center;
         gap: 15px;
-        background-color: #010101d9;
-        padding:30px ;
         width: 100%;
+        padding:30px ;
         z-index: 200;
         padding-left: 25px;
         height: calc(100vh - 80px + 30px);
@@ -912,7 +903,7 @@ color: #FFFFFF;
     }
   
     .aboutme .imgBox{
-        position: absolute;
+        position: relative;
         top: 0;
         left: 0;
         width: 100%;
@@ -926,7 +917,6 @@ color: #FFFFFF;
         left: 0;
         border-radius: 0;
         object-fit: cover;
-        object-position: 100% 30%; /* even if we dont declare this the image will still be centered */
     }
     
     .education{
