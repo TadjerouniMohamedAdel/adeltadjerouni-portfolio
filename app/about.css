@@ -681,9 +681,9 @@ color: #FFFFFF;
     
     .education{
         display: flex;
-        flex-direction: row;
+        flex-direction: column-reverse;
         align-items: center;
-        height: 100vh;
+        height: auto;
         width: 100vw;
         overflow: hidden;
         padding: 0;
@@ -692,9 +692,9 @@ color: #FFFFFF;
     }
     
     .education  .imgBox{
-        position: absolute;
+        position: relative;
         min-width: 100%;
-        height: 100%;
+        height: 400px;
         left: 0;
         top: 0;
         border-radius: 0;
@@ -920,9 +920,9 @@ color: #FFFFFF;
     
     .education{
         display: flex;
-        flex-direction: row;
+        flex-direction: column-reverse;
         align-items: center;
-        height: 80vh;
+        height: auto;
         width: 100vw;
         overflow: hidden;
         padding: 0;
@@ -931,9 +931,9 @@ color: #FFFFFF;
     }
     
     .education  .imgBox{
-        position: absolute;
+        position: relative;
         min-width: 100%;
-        height: 100%;
+        height: 400px;
         left: 0;
         top: 0;
         border-radius: 0;
@@ -945,12 +945,11 @@ color: #FFFFFF;
         left: 0;
         width: 100%;
         height: 100%;
-        object-position: 0% 30%; /* even if we dont declare this the image will still be centered */
         object-fit: cover;
     }
     
     .education .content{
-    background-color: #010101d9;;
+    background-color: #010101d9;
         display: flex;
         flex-direction: column;
         gap:50px;
