@@ -10,11 +10,14 @@ import {
 } from '@remix-run/react';
 import rootcss from './root.css';
 
+const boxicons = 'https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css';
+
 export const links: LinksFunction = () => [
   ...(cssBundleHref
     ? [
         { rel: 'stylesheet', href: cssBundleHref },
         { rel: 'stylesheet', href: rootcss },
+        { rel: 'stylesheet', href: boxicons },
       ]
     : []),
 ];
@@ -25,10 +28,6 @@ export default function App() {
       <head>
         <meta charSet="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link
-          href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css"
-          rel="stylesheet"
-        />
         <Meta />
         <Links />
       </head>
