@@ -10,7 +10,7 @@ export const links: LinksFunction = () => [
 ];
 
 export const meta: MetaFunction = () => {
-  const title = 'Adel Tadjerouni Projects';
+  const title = 'Adel Mohamed Tadjerouni Projects';
   const description =
     'Adel Mohamed Tadjerouni personal website with projects, skills and contact informations';
   const previewImage = 'https://adeltadjerouni.com/favicon.png';
