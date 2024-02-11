@@ -147,7 +147,10 @@ export default function Index() {
           <ul>
             <li>
               <a href="https://www.bea.dz/" target="_blank" rel="noreferrer">
-                <img src="/images/bea_logo.png" alt="" />
+                <img
+                  src="/images/bea_logo.png"
+                  alt={`adel mohamed tadjerouni companies`}
+                />
               </a>
             </li>
             <li>
@@ -156,7 +159,10 @@ export default function Index() {
                 target="_blank"
                 rel="noreferrer"
               >
-                <img src="/images/ep_logo.png" alt="" />
+                <img
+                  src="/images/ep_logo.png"
+                  alt={`adel mohamed tadjerouni companies`}
+                />
               </a>
             </li>
             <li>
@@ -165,7 +171,10 @@ export default function Index() {
                 target="_blank"
                 rel="noreferrer"
               >
-                <img src="/images/cleverzone.png" alt="" />
+                <img
+                  src="/images/cleverzone.png"
+                  alt={`adel mohamed tadjerouni companies`}
+                />
               </a>
             </li>
             <li>
@@ -174,7 +183,10 @@ export default function Index() {
                 target="_blank"
                 rel="noreferrer"
               >
-                <img src="/images/scalexp.png" alt="" />
+                <img
+                  src="/images/scalexp.png"
+                  alt={`adel mohamed tadjerouni companies`}
+                />
               </a>
             </li>
           </ul>
@@ -205,23 +217,38 @@ export default function Index() {
               className="swiper-technologies"
             >
               <SwiperSlide>
-                <img src="/images/skills/react-color.svg" alt="" />
+                <img
+                  src="/images/skills/react-color.svg"
+                  alt="skill pic adel mohamed tadjerouni"
+                />
                 <span>React</span>
               </SwiperSlide>
               <SwiperSlide>
-                <img src="/images/skills/nextjs-color.svg" alt="" />
+                <img
+                  src="/images/skills/nextjs-color.svg"
+                  alt="skill pic adel mohamed tadjerouni"
+                />
                 <span>Nextjs</span>
               </SwiperSlide>
               <SwiperSlide>
-                <img src="/images/skills/remix-color.svg" alt="" />
+                <img
+                  src="/images/skills/remix-color.svg"
+                  alt="skill pic adel mohamed tadjerouni"
+                />
                 <span>Remixjs</span>
               </SwiperSlide>
               <SwiperSlide>
-                <img src="/images/skills/astro-color.svg" alt="" />
+                <img
+                  src="/images/skills/astro-color.svg"
+                  alt="skill pic adel mohamed tadjerouni"
+                />
                 <span>Astro</span>
               </SwiperSlide>
               <SwiperSlide>
-                <img src="/images/skills/graphql-color.svg" alt="" />
+                <img
+                  src="/images/skills/graphql-color.svg"
+                  alt="skill pic adel mohamed tadjerouni"
+                />
                 <span>GraphQL</span>
               </SwiperSlide>
             </Swiper>
@@ -238,27 +265,45 @@ export default function Index() {
               className="swiper-technologies"
             >
               <SwiperSlide>
-                <img src="/images/skills/css3-color.svg" alt="" />
+                <img
+                  src="/images/skills/css3-color.svg"
+                  alt="skill pic adel mohamed tadjerouni"
+                />
                 <span>CSS3</span>
               </SwiperSlide>
               <SwiperSlide>
-                <img src="/images/skills/sass-color.svg" alt="" />
+                <img
+                  src="/images/skills/sass-color.svg"
+                  alt="skill pic adel mohamed tadjerouni"
+                />
                 <span>Sass</span>
               </SwiperSlide>
               <SwiperSlide>
-                <img src="/images/skills/ant-design-color.svg" alt="" />
+                <img
+                  src="/images/skills/ant-design-color.svg"
+                  alt="skill pic adel mohamed tadjerouni"
+                />
                 <span>Ant design</span>
               </SwiperSlide>
               <SwiperSlide>
-                <img src="/images/skills/bootstrap-color.svg" alt="" />
+                <img
+                  src="/images/skills/bootstrap-color.svg"
+                  alt="skill pic adel mohamed tadjerouni"
+                />
                 <span>Bootstrap</span>
               </SwiperSlide>
               <SwiperSlide>
-                <img src="/images/skills/mui-color.svg" alt="" />
+                <img
+                  src="/images/skills/mui-color.svg"
+                  alt="skill pic adel mohamed tadjerouni"
+                />
                 <span>MUI</span>
               </SwiperSlide>
               <SwiperSlide>
-                <img src="/images/skills/tailwindcss-color.svg" alt="" />
+                <img
+                  src="/images/skills/tailwindcss-color.svg"
+                  alt="skill pic adel mohamed tadjerouni"
+                />
                 <span>Tailwind</span>
               </SwiperSlide>
             </Swiper>
@@ -275,23 +320,38 @@ export default function Index() {
               className="swiper-technologies"
             >
               <SwiperSlide>
-                <img src="/images/skills/typescript-color.svg" alt="" />
+                <img
+                  src="/images/skills/typescript-color.svg"
+                  alt="skill pic adel mohamed tadjerouni"
+                />
                 <span>Typescript</span>
               </SwiperSlide>
               <SwiperSlide>
-                <img src="/images/skills/javascript-color.svg" alt="" />
+                <img
+                  src="/images/skills/javascript-color.svg"
+                  alt="skill pic adel mohamed tadjerouni"
+                />
                 <span>Javascript</span>
               </SwiperSlide>
               <SwiperSlide>
-                <img src="/images/skills/nodedotjs-color.svg" alt="" />
+                <img
+                  src="/images/skills/nodedotjs-color.svg"
+                  alt="skill pic adel mohamed tadjerouni"
+                />
                 <span>NodeJs</span>
               </SwiperSlide>
               <SwiperSlide>
-                <img src="/images/skills/php-color.svg" alt="" />
+                <img
+                  src="/images/skills/php-color.svg"
+                  alt="skill pic adel mohamed tadjerouni"
+                />
                 <span>PHP</span>
               </SwiperSlide>
               <SwiperSlide>
-                <img src="/images/skills/symfony-white.svg" alt="" />
+                <img
+                  src="/images/skills/symfony-white.svg"
+                  alt="skill pic adel mohamed tadjerouni"
+                />
                 <span>Symfony</span>
               </SwiperSlide>
             </Swiper>

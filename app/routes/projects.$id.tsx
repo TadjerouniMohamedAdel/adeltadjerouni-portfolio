@@ -117,7 +117,10 @@ const ProjectItemPage = () => {
       <main className="project-id">
         <h1>
           <div className="project-image">
-            <img src={project.project_logo} alt="project logo" />
+            <img
+              src={project.project_logo}
+              alt="adel mohamed tadjerouni project logo"
+            />
           </div>
           <span>{project.name}</span>
         </h1>
@@ -138,7 +141,10 @@ const ProjectItemPage = () => {
           >
             {project?.screens.map((screen, index) => (
               <SwiperSlide key={index}>
-                <img src={screen} alt="screen project" />
+                <img
+                  src={screen}
+                  alt="adel mohamed tadjerouni project screen"
+                />
               </SwiperSlide>
             ))}
           </Swiper>
@@ -160,7 +166,10 @@ const ProjectItemPage = () => {
               <h3>Project Info</h3>
               <div>
                 <div className="project-logo">
-                  <img src={project.company_logo} alt="" />
+                  <img
+                    src={project.company_logo}
+                    alt="adel mohamed tadjerouni company logo"
+                  />
                 </div>
                 <div className="project-info-content">
                   <span>{project.company}</span>

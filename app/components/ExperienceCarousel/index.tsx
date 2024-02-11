@@ -65,7 +65,7 @@ const ExperienceCarousel: FC<{
                 <div />
                 <img
                   src={experience.company_logo}
-                  alt="experince company logo"
+                  alt={` adel mohamed tadjerouni experince ${experience.company}`}
                 />
               </div>
             </div>
@@ -107,7 +107,7 @@ const ExperienceCarousel: FC<{
                 <div />
                 <img
                   src={experience.company_logo}
-                  alt="experince company logo"
+                  alt={` adel mohamed tadjerouni experince ${experience.company}`}
                 />
               </div>
             </div>

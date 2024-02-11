@@ -72,7 +72,7 @@ const ContactSection = () => {
         </div>
       </div>
       <div className="imgBox">
-        <img src="/images/contact.png" alt="" />
+        <img src="/images/contact.png" alt="adel mohamed tadjerouni contact" />
         <div className="purple-square"></div>
         <div className="orange-square"></div>
         <div className="gray-square"></div>

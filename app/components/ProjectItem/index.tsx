@@ -10,7 +10,10 @@ const ProjectItem: React.FC<ProjectItemPropsType> = ({ project }) => {
   return (
     <div className="project">
       <div className={`imgContainer ${project.name.toLocaleLowerCase()}`}>
-        <img src={project.project_logo} alt="" />
+        <img
+          src={project.project_logo}
+          alt={` adel mohamed tadjerouni project ${project.name}`}
+        />
       </div>
       <ul>
         {project.technologies.slice(0, 5).map((techno) => (
