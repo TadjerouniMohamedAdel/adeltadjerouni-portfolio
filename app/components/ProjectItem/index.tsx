@@ -28,7 +28,7 @@ const ProjectItem: React.FC<ProjectItemPropsType> = ({ project }) => {
       <div className="links">
         <LinkButton
           rightIcon="bxs-navigation"
-          label="Read more"
+          label="Explore details"
           to={`/projects/${project.id}`}
           width="medium"
         />
