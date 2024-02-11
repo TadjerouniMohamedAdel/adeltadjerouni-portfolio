@@ -34,7 +34,11 @@ const LinkButton: React.FC<LinkButtonPropsType> = ({
     );
   }
   return (
-    <Link to={to} className={`link-button ${width} ${color}`}>
+    <Link
+      to={to}
+      className={`link-button ${width} ${color}`}
+      aria-description="adel mohamed tadjerouni link"
+    >
       {leftIcon && <i className={`bx ${leftIcon}`} />}
       <span>{label}</span>
       {rightIcon && <i className={`bx ${rightIcon}`} />}
