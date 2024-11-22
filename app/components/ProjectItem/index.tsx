@@ -32,13 +32,15 @@ const ProjectItem: React.FC<ProjectItemPropsType> = ({ project }) => {
           to={`/projects/${project.id}`}
           width="medium"
         />
-        <LinkButton
-          color="transparent"
-          leftIcon="bxl-github"
-          label="Source code"
-          to="/projects/1"
-          width="medium"
-        />
+        {project.code_link && (
+          <LinkButton
+            color="transparent"
+            leftIcon="bxl-github"
+            label="Source code"
+            to={project.code_link}
+            width="medium"
+          />
+        )}
       </div>
     </div>
   );
