@@ -27,7 +27,7 @@ export const projects:Project[]= [
       "project_logo": "/images/scalexp-icon.svg",
       "short_description":"Automate revenue recognition, consolidate financial and sales data. ",
       "description": "ScaleXP gives B2B funded businesses, particularly high-growth SaaS companies, the tools to automate revenue recognition, consolidate financial and sales data as well as streamline financial processes through a single platform. ScaleXP streamlines accounting processes for finance teams and SaaS businesses. With it, you can connect Xero to your CRM and payment processing system to see paid and issued invoices, tax/discount/product code mapping, standardised FX rates, and any edits and many other features.",
-      "code_link": "",
+      "code_link": undefined,
       "demo_link": "https://www.scalexp.com/",
       "technologies": [
         "Typescript",
@@ -68,7 +68,7 @@ export const projects:Project[]= [
       "project_logo": "/images/projects/docta/docta.png",
       "short_description":"Digital system that provides a clever healthcare experience.",
       "description": "Docta is a digital system that provides a clever healthcare experience through : A free mobile application that enables patients to book appointments with doctors. Patients can instantly search, compare and book the best doctors around the clock. A web platform that enables doctors to define and control their working hours, manage appointments and consult patients’ data such as allergies, medical records and medications",
-      "code_link": "",
+      "code_link": "https://github.com/TadjerouniMohamedAdel/docta-pro-web",
       "demo_link": "https://play.google.com/store/apps/details?id=io.cleverzone.docta&hl=fr&gl=US",
       "technologies": [
         "Typescript",
@@ -120,8 +120,8 @@ export const projects:Project[]= [
       "project_logo": "/images/eenar.png",
       "short_description":"Interactive scientific research platform.",
       "description": "EENAR is an interactive scientific research platform for academic institutions and researchers. Its goal is to enrich and facilitate scientific research. Share and discuss your projects and ideas. Find potential investors for your scientific projects",
-      "code_link": "",
-      "demo_link": "",
+      "code_link": "https://github.com/TadjerouniMohamedAdel/eenar-researcher",
+      "demo_link": undefined,
       "technologies": [
         "Typescript",
         "Javascript",
@@ -216,7 +216,7 @@ export const projects:Project[]= [
       "date": "2020",
       "project_logo": "/images/khedemi.webp",
       "description": "Khedemni! The first application in Algeria specialized in the recruitment of hostelry and restoration.",
-      "code_link": "",
+      "code_link": undefined,
       "demo_link": "https://play.google.com/store/apps/details?id=com.khedemni&hl=fr",
       "technologies": [
         "React native",
@@ -252,7 +252,7 @@ export const projects:Project[]= [
       "project_logo": "/images/buileo.png",
       short_description:"The tool that will allow you to manage your customer relationship",
       "description": "Buileo CRM is the tool that will allow you to better manage your customer relationship and better control your company's sales process. Thanks to its various modules, you will have visibility into all of your activities.",
-      "code_link": "",
+      "code_link": undefined,
       "demo_link":"https://www.buileo.com/",
       "technologies": [
         "Javascript",
@@ -285,7 +285,7 @@ export const projects:Project[]= [
       "project_logo": "/images/ep_logo.png",
       short_description:"The website that offers innovative Sourcing and Recruitment.",
       "description": "EmploiPartner is an e-recruitment website that offers innovative Sourcing and Recruitment solutions to support companies in their HR development projects.",
-      "code_link": "",
+      "code_link": undefined,
       "demo_link": "https://www.emploipartner.com/fr/",
       "technologies": [
         "React",
