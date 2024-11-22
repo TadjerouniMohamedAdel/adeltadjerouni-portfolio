@@ -61,7 +61,7 @@ transform: translateX(-50%);
     display: flex;
     flex-wrap: wrap;
     gap: 30px;
-    justify-content: center;
+    justify-content: space-evenly;
     width: 100%;
 }
 
