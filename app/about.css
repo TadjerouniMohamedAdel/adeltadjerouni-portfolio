@@ -1,36 +1,45 @@
-
-
-.aboutme{
-    display: flex;
-    flex-direction: row;
-    padding:0;
-    margin: 0;
-    flex-wrap: wrap;
-    width: 100%;
-    position: relative;
-    top:-50px;
-    z-index:-1;
-    
+:root {
+    --about-max-width: 1400px;
+    --about-side-gutter: 60px;
 }
 
-.aboutme .content{
+/* ========== ABOUT ME (base / desktop >= 1241px) ========== */
+.aboutme {
+    display: flex;
+    justify-content: center;
+    padding: 0 var(--about-side-gutter);
+    margin: 0;
+    width: 100%;
+    position: relative;
+    top: -50px;
+    z-index: -1;
+}
+
+.aboutme .inner {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 60px;
+    width: 100%;
+    max-width: var(--about-max-width);
+    margin: 0 auto;
+}
+
+.aboutme .content {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
     gap: 20px;
     background-color: var(--secondary-black-color);
-    padding:50px;
-    width: 75%;
-    padding-left: 85px;
-    height: auto;
-    border-bottom-right-radius: 20px;
-
-
+    padding: 80px 60px;
+    flex: 1 1 0;
+    max-width: 720px;
+    border-radius: 20px;
 }
 
-.aboutme .content h2{
+.aboutme .content h2 {
     font-style: normal;
-    margin-top:100px;
+    margin-top: 0;
     max-width: 500px;
     font-weight: 700;
     font-size: 64px;
@@ -39,17 +48,18 @@
     text-transform: capitalize;
     color: #FFFFFF;
 }
-.aboutme .content p{
+
+.aboutme .content p {
     font-style: normal;
     font-weight: 400;
     font-size: 18px;
-    max-width:539px;
+    max-width: 539px;
     line-height: 160%;
-
     color: #FFFFFF;
-    margin-bottom: 30px;
+    margin-bottom: 0;
 }
-.aboutme .content button{
+
+.aboutme .content button {
     display: flex;
     flex-direction: row;
     justify-content: center;
@@ -59,73 +69,78 @@
     border: unset;
     border-radius: 8px;
     font-style: normal;
-font-weight: 600;
-font-size: 16px;
-line-height: 19px;
-text-align: center;
-
-color: #FFFFFF;
-
+    font-weight: 600;
+    font-size: 16px;
+    line-height: 19px;
+    text-align: center;
+    color: #FFFFFF;
 }
-.aboutme .imgBox{
-    width: 500px;
-    height: 650px;
-    position: absolute;
-    right: 100px;
-    top:80px;
+
+.aboutme .imgBox {
+    flex: 0 0 auto;
+    width: clamp(360px, 36vw, 500px);
+    aspect-ratio: 500 / 650;
+    position: relative;
 }
-.aboutme .imgBox img{
+
+.aboutme .imgBox img {
     width: 100%;
     height: 100%;
     position: absolute;
-    top: 0;
-    left: 0;
+    inset: 0;
     border-radius: 20px;
     object-fit: cover;
-    object-position: 100% 40%; /* even if we dont declare this the image will still be centered */
+    object-position: 100% 40%;
 }
 
-.education{
+/* ========== EDUCATION (base / desktop >= 1241px) ========== */
+.education {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 80px var(--about-side-gutter);
+    background-color: #0D0D0D;
+}
+
+.education .inner {
     display: flex;
     flex-direction: row;
-    align-items: center;
-    height: 100vh;
-    padding: 0;
-    background-color: #0D0D0D;
-
+    align-items: stretch;
+    gap: 40px;
+    width: 100%;
+    max-width: var(--about-max-width);
+    margin: 0 auto;
 }
 
-.education  .imgBox{
+.education .imgBox {
     position: relative;
-    min-width: 587px;
-    height: 602px;
-    right: -140px;
+    flex: 0 0 clamp(320px, 34vw, 460px);
+    aspect-ratio: 5 / 6;
+    align-self: center;
     border-radius: 20px;
+    overflow: hidden;
 }
 
-.education .imgBox img{
+.education .imgBox img {
     position: absolute;
-    top: 0;
-    left: 0;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    border-radius: inherit;
 }
 
-.education .content{
+.education .content {
     background: var(--secondary-black-color);
     display: flex;
     flex-direction: column;
-    gap:50px;
-    height: 100%;
-    flex:1;
-    padding: 150px 0;
-    padding-left: 220px;
-
+    gap: 50px;
+    justify-content: center;
+    flex: 1 1 0;
+    padding: 80px 60px;
+    border-radius: 20px;
 }
 
-.education .content h2{
+.education .content h2 {
     font-style: normal;
     font-weight: 700;
     font-size: 48px;
@@ -133,950 +148,407 @@ color: #FFFFFF;
     color: #FFFFFF;
 }
 
-.education .content ul{
+.education .content ul {
     display: flex;
     flex-direction: column;
-    gap:42px
+    gap: 42px;
+    list-style: none;
 }
-.education .content ul li{
+
+.education .content ul li {
     display: flex;
     flex-direction: column;
     gap: 18px;
 }
-.education .content ul li h3{
+
+.education .content ul li h3 {
     font-style: normal;
     font-weight: 700;
     font-size: 24px;
-    line-height: 29px;    
-    color: #FFFFFF;   
+    line-height: 29px;
+    color: #FFFFFF;
 }
 
-.education .content ul li p{
+.education .content ul li p {
     font-style: normal;
     font-weight: 400;
     font-size: 16px;
     line-height: 30px;
-    max-width: 414px;
-    color: #FFFFFF;   
+    max-width: 514px;
+    color: #FFFFFF;
 }
-.career{
+
+/* ========== CAREER (base / desktop >= 1241px) ========== */
+.career {
     display: flex;
-    justify-content: space-around;
-    align-items: center;
-    margin-top: 40px;
+    justify-content: center;
+    padding: 80px var(--about-side-gutter);
 }
-.career .content h2{
+
+.career .inner {
+    display: flex;
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 60px;
+    width: 100%;
+    max-width: var(--about-max-width);
+    margin: 0 auto;
+}
+
+.career .content {
+    flex: 0 0 clamp(360px, 40%, 520px);
+    position: sticky;
+    top: 110px;
+    align-self: flex-start;
+}
+
+.career .content h2 {
     font-style: normal;
     font-weight: 700;
     font-size: 48px;
     line-height: 58px;
     color: #FFFFFF;
 }
-.career .content p{
+
+.career .content p {
     font-family: Sen;
-font-size: 18px;
-font-style: normal;
-margin-top: 20px;
-font-weight: 400;
-line-height: 30px; /* 166.667% */
-max-width: 548px;
-    color: #FFFFFF;
-}
-
-.career .images{
-    display: flex;
-    flex-wrap: wrap;
-    max-width: 550px;
-    gap: 20px;
-}
-
-.career .images div:first-child{
-    position: relative;
-    top: -25px;
-    width: 484.114px;
-height: 264.114px;
-}
-.career .images div:nth-child(2){
-    position: relative;
-    top: 25px;
-    width: 220.095px;
-height: 220.095px;
-}
-.career .images div:nth-child(3){
-    position: relative;
-    top: -25px;
-    width: 250.095px;
-height: 220.095px;
-}
-.career .images div:nth-child(4){
-    position: relative;
-    top: 25px;
-    width: 264.114px;
-    height: 264.114px;
-}
-.career .images div:nth-child(5){
-    position: relative;
-    top: -25px;
-    width: 264.114px;
-    height: 264.114px;
-}
-.career .images > div >img{
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-}
-@media(max-width:1240px){
-.aboutme{
-    display: flex;
-    flex-direction: row;
-    padding:0;
-    margin: 0;
-    flex-wrap: wrap;
-    height: calc(100vh - 88px + 50px);
-    width: 100%;
-    position: relative;
-    top:-50px;
-    z-index:-1;
-    
-}
-
-.aboutme .content{
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 20px;
-    background-color: var(--secondary-black-color);
-    padding:50px;
-    width: 75%;
-    padding-left: 45px;
-    padding-right: 0;
-    height: calc(90vh - 80px + 30px);
-    border-bottom-right-radius: 20px;
-
-
-}
-
-.aboutme .content h2{
-    margin-top:80px;
-    font-size: 38px;
-    line-height: 47px;
-}
-.aboutme .content p{
-    font-size: 16px;
-    max-width:539px;
-    line-height: 160%;
-}
-
-.aboutme .imgBox{
-    width: 350px;
-    height: 420px;
-    position: absolute;
-    right: 100px;
-    top:120px;
-}
-.aboutme .imgBox img{
-    width: 100%;
-    height: 100%;
-    position: absolute;
-    top: 0;
-    left: 0;
-    border-radius: 20px;
-    object-fit: cover;
-    object-position: 100% 40%; /* even if we dont declare this the image will still be centered */
-}
-
-.education{
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    height: 90vh;
-    padding: 0;
-    background-color: #0D0D0D;
-
-}
-
-.education  .imgBox{
-    position: relative;
-    min-width: 400px;
-    height: 410px;
-    right: -140px;
-    border-radius: 20px;
-}
-
-.education .imgBox img{
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    border-radius: inherit;
-}
-
-.education .content{
-    background: var(--secondary-black-color);
-    display: flex;
-    flex-direction: column;
-    gap:50px;
-    height: 100%;
-    flex:1;
-    padding: 100px 0;
-    padding-left: 220px;
-
-}
-
-.education .content h2{
-    font-size: 38px;
-    line-height: 47px;
-}
-
-.education .content ul{
-    display: flex;
-    flex-direction: column;
-    gap:42px
-}
-.education .content ul li{
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-}
-.education .content ul li h3{
+    font-size: 18px;
     font-style: normal;
-    font-weight: 700;
-    font-size: 20px;
-    line-height: 19px;    
-    color: #FFFFFF;   
-}
-
-.education .content ul li p{
-    font-style: normal;
+    margin-top: 20px;
     font-weight: 400;
-    font-size: 16px;
-    line-height: 160%;
-    max-width: 414px;
-    color: #FFFFFF;   
-}
-.career{
-    display: flex;
-    justify-content: space-around;
-    align-items: center;
-    margin-top: 40px;
-}
-.career .content h2{
-    font-size: 38px;
-    line-height: 47px;
-}
-.career .content p{
-    font-family: Sen;
-font-size: 16px;
-margin-top: 20px;
-font-weight: 400;
-line-height: 24px; /* 166.667% */
-max-width: 548px;
-color: #FFFFFF;
+    line-height: 30px;
+    color: #FFFFFF;
+    max-width: 100%;
 }
 
-.career .images{
-    display: flex;
-    flex-wrap: wrap;
-    max-width: 400px;
-    gap: 20px;
+.career .images {
+    flex: 1 1 0;
+    column-count: 3;
+    column-gap: 12px;
+    max-width: none;
 }
 
-.career .images div:first-child{
-    position: relative;
-    top: -25px;
-    width: 380px;
-    height: 228px;
-}
-.career .images div:nth-child(2){
-    position: relative;
-    top: 25px;
-    width: 180px;
-    height: 180px;
-}
-.career .images div:nth-child(3){
-    position: relative;
-    top: -25px;
-    width: 200px;
-    height: 176px;
-}
-.career .images div:nth-child(4){
-    position: relative;
-    top: 25px;
-    width: 200px;
-    height: 200px;
-}
-.career .images div:nth-child(5){
-    position: relative;
-    top: -25px;
-    width: 180px;
-    height: 180px;
-}
-.career .images > div >img{
-    position: absolute;
-    top: 0;
-    left: 0;
+.career .images > button {
+    display: block;
     width: 100%;
-    height: 100%;
+    margin: 0 0 12px 0;
+    padding: 0;
+    border: none;
+    background: none;
+    cursor: zoom-in;
+    border-radius: 12px;
+    overflow: hidden;
+    break-inside: avoid;
+    position: relative;
+    transition: transform 0.25s ease;
+}
+
+.career .images > button:hover {
+    transform: translateY(-2px);
+}
+
+.career .images > button img {
+    width: 100%;
+    height: auto;
+    display: block;
     object-fit: cover;
+    transition: transform 0.45s ease;
 }
+
+.career .images > button:hover img {
+    transform: scale(1.05);
 }
-@media(max-width:1035px){
-    
-    .aboutme .content{
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 20px;
-        background-color: var(--secondary-black-color);
-        padding:50px;
-        width: 60%;
-        padding-left: 45px;
-        padding-right: 0;
-        height: calc(90vh - 50px + 30px);
-        border-bottom-right-radius: 20px;
-    
-    
+
+/* ========== BREAKPOINT: <= 1240px ========== */
+@media (max-width: 1240px) {
+    .aboutme {
+        padding: 0 40px;
+        top: -50px;
     }
-    
-    .aboutme .content h2{
-        margin-top:80px;
+    .aboutme .inner {
+        gap: 40px;
+    }
+    .aboutme .content {
+        padding: 60px 40px;
+        max-width: 520px;
+        gap: 18px;
+    }
+    .aboutme .content h2 {
         font-size: 38px;
         line-height: 47px;
+        margin-top: 0;
     }
-    .aboutme .content p{
+    .aboutme .content p {
         font-size: 16px;
-        max-width:450px;
-        line-height: 160%;
+        max-width: 539px;
     }
-    
-    .aboutme .imgBox{
-        width: 350px;
-        height: 420px;
-        position: absolute;
-        right: 30px;
-        top:120px;
+    .aboutme .imgBox {
+        width: clamp(280px, 32vw, 380px);
     }
-    .aboutme .imgBox img{
-        width: 100%;
-        height: 100%;
-        position: absolute;
-        top: 0;
-        left: 0;
-        border-radius: 20px;
-        object-fit: cover;
-        object-position: 100% 40%; /* even if we dont declare this the image will still be centered */
+
+    .education {
+        padding: 60px 40px;
     }
-    
-    .education{
-        display: flex;
-        flex-direction: row;
-        align-items: center;
-        height: 90vh;
-        padding: 0;
-        background-color: #0D0D0D;
-    
+    .education .inner {
+        gap: 30px;
     }
-    
-    .education  .imgBox{
-        position: relative;
-        min-width: 300px;
-        height: 307px;
-        right: -140px;
-        border-radius: 20px;
+    .education .imgBox {
+        flex: 0 0 clamp(260px, 32vw, 380px);
+        aspect-ratio: 5 / 6;
     }
-    
-    .education .imgBox img{
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-        border-radius: inherit;
+    .education .content {
+        padding: 60px 40px;
+        gap: 40px;
     }
-    
-    .education .content{
-        background: var(--secondary-black-color);
-        display: flex;
-        flex-direction: column;
-        gap:50px;
-        height: 100%;
-        flex:1;
-        padding: 100px 0;
-        padding-left: 220px;
-    
-    }
-    
-    .education .content h2{
+    .education .content h2 {
         font-size: 38px;
         line-height: 47px;
     }
-    
-    .education .content ul{
-        display: flex;
-        flex-direction: column;
-        gap:42px
+    .education .content ul {
+        gap: 32px;
     }
-    .education .content ul li{
-        display: flex;
-        flex-direction: column;
+    .education .content ul li {
         gap: 10px;
     }
-    .education .content ul li h3{
-        font-style: normal;
-        font-weight: 700;
+    .education .content ul li h3 {
         font-size: 20px;
-        line-height: 19px;    
-        color: #FFFFFF;   
+        line-height: 24px;
     }
-    
-    .education .content ul li p{
-        font-style: normal;
-        font-weight: 400;
+    .education .content ul li p {
         font-size: 16px;
         line-height: 160%;
         max-width: 414px;
-        color: #FFFFFF;   
     }
-    .career{
-        display: flex;
-        justify-content: space-around;
-        align-items: center;
-        margin-top: 40px;
+
+    .career {
+        padding: 60px 40px;
     }
-    .career .content{
-        padding-left: 40px;
+    .career .inner {
+        gap: 40px;
     }
-    .career .content h2{
+    .career .content {
+        flex: 0 0 clamp(300px, 38%, 440px);
+        top: 100px;
+    }
+    .career .content h2 {
         font-size: 38px;
         line-height: 47px;
     }
-    .career .content p{
-        font-family: Sen;
-    font-size: 16px;
-
-    margin-top: 20px;
-    font-weight: 400;
-    line-height: 24px; /* 166.667% */
-    max-width: 548px;
-    color: #FFFFFF;
-    }
-    
-    .career .images{
-        display: flex;
-        flex-wrap: wrap;
-        max-width: 350px;
-        gap: 20px;
-    }
-    
-    .career .images div:first-child{
-        position: relative;
-        top: -25px;
-        width: 350px;
-        height: 210px;
-    }
-    .career .images div:nth-child(2){
-        position: relative;
-        top: 25px;
-        width: 140px;
-        height: 140px;
-    }
-    .career .images div:nth-child(3){
-        position: relative;
-        top: -25px;
-        width: 170px;
-        height: 149px;
-    }
-    .career .images div:nth-child(4){
-        position: relative;
-        top: 25px;
-        width: 170px;
-        height: 170px;
-    }
-    .career .images div:nth-child(5){
-        position: relative;
-        top: -25px;
-        width: 140px;
-        height: 140px;
-    }
-    .career .images > div >img{
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    }
-
-@media(max-width:870px){
-    .aboutme{
-        flex-direction: row;
-        width: 100%;
-        flex-wrap: nowrap;
-        width: 100%;
-        position: relative;
-        align-items: center;
-        height: auto;
-        z-index:-1;
-        
-    }
-    
-    .aboutme .content{
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        gap: 20px;
-        padding:50px ;
-        z-index: 200;
-        height: auto;
-        padding-left: 25px;
-        width: 70%;
-        border-bottom-right-radius: 0;
-    
-    
-    }
-    
-    .aboutme .content h2{
-        font-style: normal;
-        margin-top:100px;
-        max-width: 500px;
-        font-weight: 700;
-        font-size:30px;
-        line-height: 37px;
-        display: flex;
-        text-transform: capitalize;
-        color: #FFFFFF;
-    }
-    .aboutme .content p{
-        font-style: normal;
-        font-weight: 400;
+    .career .content p {
         font-size: 16px;
-        max-width:539px;
-        line-height: 160%;
-    
-        color: #FFFFFF;
-        margin-bottom: 30px;
+        line-height: 26px;
     }
-  
-    .aboutme .imgBox{
-        position: relative;
-        top: unset;
-        border-radius: 20px;
+    .career .images {
+        column-count: 2;
+        column-gap: 10px;
     }
-    .aboutme .imgBox img{
-        width: 100%;
-        height: 100%;
-        position: absolute;
-        top: 0;
-        left: 0;
-        border-radius: inherit;
-        object-fit: cover;
-    }
-    
-    .education{
-        display: flex;
-        flex-direction: column-reverse;
-        align-items: center;
-        height: auto;
-        width: 100vw;
-        overflow: hidden;
-        padding: 0;
-        position: relative;
-    
-    }
-    
-    .education  .imgBox{
-        position: relative;
-        min-width: 100%;
-        height: 400px;
-        left: 0;
-        top: 0;
-        border-radius: 0;
-    }
-    
-    .education .imgBox img{
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-position: 0% 30%; /* even if we dont declare this the image will still be centered */
-        object-fit: cover;
-    }
-    
-    .education .content{
-    background-color: #010101d9;;
-        display: flex;
-        flex-direction: column;
-        gap:50px;
-        width: 100%;
-        height: 100%;
-        z-index: 200;
-        flex:1;
-        padding-left: 40px;
-    
-    }
-    
-    .education .content h2{
-        font-style: normal;
-        font-weight: 700;
-        font-size:30px;
-        line-height: 28px;
-        color: #FFFFFF;
-    }
-    
-    .education .content ul{
-        display: flex;
-        flex-direction: column;
-        gap:42px
-    }
-    .education .content ul li{
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-    }
-    .education .content ul li h3{
-        font-style: normal;
-        font-weight: 700;
-        font-size: 22px;
-        line-height: 20px;    
-        color: #FFFFFF;   
-    }
-    
-    .education .content ul li p{
-        font-style: normal;
-        font-weight: 400;
-        font-size: 18px;
-        line-height: 30px;
-        max-width: 514px;
-        color: #FFFFFF;   
-    }
-    .career{
-        display: flex;  
-        flex-direction: column;
-        gap: 40px;      
-        position: relative;
-        width: 100vw;
-        overflow: hidden;
-        padding: 40px 0;
-        background-color: #010101d9;
-
-    }
-    .career .content{
-        z-index: 100;
-        height: auto;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-    }
-    .career .content h2{
-        font-style: normal;
-        font-weight: 700;
-        font-size:30px;
-        line-height: 38px;
-        color: #FFFFFF;
-    }
-    .career .content p{
-        font-family: Sen;
-    font-size: 18px;
-    font-style: normal;
-    margin-top: 18px;
-    font-weight: 400;
-    line-height: 25px; /* 166.667% */
-    max-width: 548px;
-        color: #FFFFFF;
-    }
-    .career{
-        display: flex ;        
-        flex-direction: column ;
-        
-    }
-    
-    .career .images{
-        display: flex;
-        flex-direction: row;
-        position: relative;
-        top: unset ;
-        left: unset ;
-        min-width: 100vw;
-        justify-content: center;
-        height: 100%;
-        flex-wrap: wrap;
-        gap: 30px;
-    }
-    
-    .career .images div:first-child{
-        position: relative;
-        top: 0;
-        width: 367px;
-    height: 200px;
-    }
-    .career .images div:nth-child(2){
-        position: relative;
-        top: 0;
-        width: 170px;
-    height: 170px;
-    }
-    .career .images div:nth-child(3){
-        position: relative;
-        top: 0;
-        width: 250.095px;
-    height: 220.095px;
-    }
-    .career .images div:nth-child(4){
-        position: relative;
-        top: 0;
-        width: 214.114px;
-        height: 214.114px;
-    }
-    .career .images div:nth-child(5){
-        position: relative;
-        top: 0;
-        width: 264.114px;
-        height: 264.114px;
-    }
-    .career .images > div >img{
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
+    .career .images > button {
+        margin-bottom: 10px;
     }
 }
-@media(max-width:620px){
-    .aboutme{
-        display: flex;
-        flex-direction: column;
-        align-items: center;
-        padding:0;
-        margin: 0;
-        width: 100%;
-        width: 100%;
-        position: relative;
-        
-    }
-    
-    .aboutme .content{
-        display: flex;
-        flex-direction: column;
-        align-items: flex-start;
-        justify-content: center;
-        gap: 15px;
-        width: 100%;
-        padding:30px ;
-        z-index: 200;
-        padding-left: 25px;
-        height: calc(100vh - 80px + 30px);
-        border-bottom-right-radius: 0;
-    
-    
-    }
-    
-    .aboutme .content h2{
-        font-style: normal;
-        margin-top:100px;
-        max-width: 500px;
-        font-weight: 700;
-        font-size:22px;
-        line-height: 27px;
-        display: flex;
-        text-transform: capitalize;
-        color: #FFFFFF;
-    }
-    .aboutme .content p{
-        font-style: normal;
-        font-weight: 400;
-        font-size: 15px;
-        max-width:539px;
-        line-height: 150%;
-    
-        color: #FFFFFF;
-        margin-bottom: 30px;
-    }
-  
-    .aboutme .imgBox{
-        position: relative;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: calc(100vh - 80px + 30px);
-    }
-    .aboutme .imgBox img{
-        width: 100%;
-        height: 100%;
-        position: absolute;
-        top: 0;
-        left: 0;
-        border-radius: 0;
-        object-fit: cover;
-    }
-    
-    .education{
-        display: flex;
-        flex-direction: column-reverse;
-        align-items: center;
-        height: auto;
-        width: 100vw;
-        overflow: hidden;
-        padding: 0;
-        position: relative;
-    
-    }
-    
-    .education  .imgBox{
-        position: relative;
-        min-width: 100%;
-        height: 400px;
-        left: 0;
-        top: 0;
-        border-radius: 0;
-    }
-    
-    .education .imgBox img{
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 100%;
-        height: 100%;
-        object-fit: cover;
-    }
-    
-    .education .content{
-    background-color: #010101d9;
-        display: flex;
-        flex-direction: column;
-        gap:50px;
-        width: 100%;
-        height: 100%;
-        z-index: 200;
-        flex:1;
-        padding-left: 40px;
-        padding-right: 40px;
-    
-    }
-    
-    .education .content h2{
-        font-style: normal;
-        font-weight: 700;
-        font-size:22px;
-        line-height: 25px;
-        color: #FFFFFF;
-    }
-    
-    .education .content ul{
-        display: flex;
-        flex-direction: column;
-        gap:42px
-    }
-    .education .content ul li{
-        display: flex;
-        flex-direction: column;
-        gap: 18px;
-    }
-    .education .content ul li h3{
-        font-style: normal;
-        font-weight: 700;
-        font-size: 18px;
-        line-height: 20px;    
-        color: #FFFFFF;   
-    }
-    
-    .education .content ul li p{
-        font-style: normal;
-        font-weight: 400;
-        font-size: 15px;
-        line-height: 150%;
-        max-width: 514px;
-        color: #FFFFFF;   
-    }
-    .career{
-        display: flex ;        
-        flex-direction: column ;
-    }
-    .career .content{
-        z-index: 100;
-        width: 100vw;
-        height: auto;
-        display: flex;
-        flex-direction: column;
-        padding-right: 20px;
-        justify-content: center;
-        background-color: #010101d9;
-    }
-    .career .content h2{
-        font-style: normal;
-        font-weight: 700;
-        font-size:22px;
-        line-height: 25px;
-        color: #FFFFFF;
-    }
-    .career .content p{
-        font-family: Sen;
-        font-size: 15px;
-        font-style: normal;
-        margin-top: 18px;
-        font-weight: 400;
-        line-height: 150%; /* 166.667% */
-        max-width: 548px;
-        color: #FFFFFF;
-    }
-    
-    .career .images{
-        display: flex;
-        position: relative;
-        top: unset ;
-        left: unset ;
-        justify-content: center;
-        height: 100%;
-        flex-wrap: wrap;
+
+/* ========== BREAKPOINT: <= 1035px ========== */
+@media (max-width: 1035px) {
+    .aboutme .inner {
         gap: 30px;
     }
-    
-    
-    .career .images div:first-child{
-        position: relative;
-        top: -0;
-        width: 350px;
-    height: 200px;
+    .aboutme .content {
+        padding: 50px 30px;
+        max-width: 480px;
     }
-    .career .images div:nth-child(2){
-        position: relative;
-        top: 0;
+    .aboutme .imgBox {
+        width: clamp(240px, 30vw, 340px);
+    }
 
-        width: 300px;
-    height: 300px;
+    .education .imgBox {
+        flex: 0 0 clamp(240px, 30vw, 320px);
+        aspect-ratio: 5 / 6;
     }
-    .career .images div:nth-child(3){
-        position: relative;
-        top: -0;
-        width: 280.095px;
-    height: 280.095px;
+    .education .content {
+        padding: 50px 30px;
     }
-    .career .images div:nth-child(4){
-        position: relative;
+
+    .career .inner {
+        gap: 30px;
+    }
+    .career .content {
+        flex: 0 0 clamp(260px, 36%, 380px);
+    }
+    .career .images {
+        column-count: 2;
+        column-gap: 10px;
+    }
+}
+
+/* ========== BREAKPOINT: <= 870px (mobile entry) ========== */
+@media (max-width: 870px) {
+    .aboutme {
+        padding: 0;
         top: 0;
-        width: 300.114px;
-        height: 300.114px;
+        flex-direction: column;
     }
-    .career .images div:nth-child(5){
-        position: relative;
-        top: -25px;
-        width: 264.114px;
-        height: 264.114px;
-    }
-    .career .images > div >img{
-        position: absolute;
-        top: 0;
-        left: 0;
+    .aboutme .inner {
+        flex-direction: column;
+        gap: 0;
+        max-width: 100%;
         width: 100%;
-        height: 100%;
-        object-fit: cover;
+        align-items: stretch;
+    }
+    .aboutme .content {
+        padding: 50px 25px;
+        max-width: 100%;
+        width: 100%;
+        border-radius: 0;
+        gap: 18px;
+    }
+    .aboutme .content h2 {
+        font-size: 30px;
+        line-height: 37px;
+        margin-top: 60px;
+    }
+    .aboutme .content p {
+        font-size: 16px;
+        line-height: 160%;
+    }
+    .aboutme .imgBox {
+        width: 100%;
+        max-width: 100%;
+        aspect-ratio: 16 / 12;
+        border-radius: 0;
+    }
+    .aboutme .imgBox img {
+        border-radius: 0;
+    }
+
+    .education {
+        padding: 0;
+    }
+    .education .inner {
+        flex-direction: column-reverse;
+        max-width: 100%;
+        width: 100%;
+    }
+    .education .imgBox {
+        flex: 0 0 auto;
+        width: 100%;
+        max-width: 100%;
+        aspect-ratio: 16 / 10;
+        border-radius: 0;
+    }
+    .education .imgBox img {
+        object-position: 0% 30%;
+    }
+    .education .content {
+        padding: 50px 30px;
+        border-radius: 0;
+        gap: 40px;
+        background-color: #010101d9;
+    }
+    .education .content h2 {
+        font-size: 30px;
+        line-height: 36px;
+    }
+    .education .content ul {
+        gap: 30px;
+    }
+    .education .content ul li h3 {
+        font-size: 22px;
+        line-height: 26px;
+    }
+    .education .content ul li p {
+        font-size: 18px;
+        line-height: 30px;
+        max-width: 540px;
+    }
+
+    .career {
+        padding: 40px 25px;
+        background-color: #010101d9;
+    }
+    .career .inner {
+        flex-direction: column;
+        gap: 30px;
+        max-width: 100%;
+        width: 100%;
+        align-items: stretch;
+    }
+    .career .content {
+        position: static;
+        flex: 0 0 auto;
+        top: auto;
+    }
+    .career .content h2 {
+        font-size: 30px;
+        line-height: 38px;
+    }
+    .career .content p {
+        font-size: 18px;
+        line-height: 26px;
+        margin-top: 18px;
+    }
+    .career .images {
+        column-count: 2;
+        column-gap: 10px;
+    }
+    .career .images > button {
+        margin-bottom: 10px;
+    }
+}
+
+/* ========== BREAKPOINT: <= 620px ========== */
+@media (max-width: 620px) {
+    .aboutme .content {
+        padding: 30px 25px;
+        gap: 15px;
+    }
+    .aboutme .content h2 {
+        font-size: 22px;
+        line-height: 27px;
+        margin-top: 60px;
+    }
+    .aboutme .content p {
+        font-size: 15px;
+        line-height: 150%;
+    }
+    .aboutme .imgBox {
+        aspect-ratio: 4 / 5;
+    }
+
+    .education .content {
+        padding: 40px 25px;
+        gap: 30px;
+    }
+    .education .content h2 {
+        font-size: 22px;
+        line-height: 26px;
+    }
+    .education .content ul li h3 {
+        font-size: 18px;
+        line-height: 22px;
+    }
+    .education .content ul li p {
+        font-size: 15px;
+        line-height: 150%;
+    }
+
+    .career {
+        padding: 30px 20px;
+    }
+    .career .content h2 {
+        font-size: 22px;
+        line-height: 26px;
+    }
+    .career .content p {
+        font-size: 15px;
+        line-height: 150%;
+        margin-top: 16px;
+    }
+    .career .images {
+        column-count: 2;
+        column-gap: 8px;
+    }
+    .career .images > button {
+        margin-bottom: 8px;
+        border-radius: 10px;
     }
 }

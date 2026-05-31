@@ -364,9 +364,12 @@
     display: flex;
     position: relative;
     align-items: center;
-    justify-content: space-between;
-    height: 100vh;
-    padding: 0 40px;
+    justify-content: center;
+    gap: 80px;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto 60px;
+    padding: 60px 40px;
 }
 
 .home .technologies .content{
@@ -374,6 +377,7 @@
     flex-direction: column;
     justify-content: flex-start;
     align-items: flex-start;
+    flex: 0 1 auto;
 
     gap: 25px;
 }
@@ -400,15 +404,10 @@
 }
 .home .technologies  .swiper-technologies{
     width: 200px;
-    height: 80vh;
+    height: clamp(380px, 60vh, 560px);
 }
 .home .technologies  .swiper-technologies .swiper-wrapper{
     transition-timing-function : linear;
-}
-.home .technologies{
-    display: flex;
-    gap: 32px;
-    margin-bottom: 60px;
 }
 .home .technologies  .swiper-slide{
     width: 180px;
@@ -450,16 +449,16 @@
 
     .home .technologies  .swiper-technologies{
         width: 140px;
-        height: 60vh;
+        height: clamp(320px, 55vh, 480px);
     }
-    
+
     .home .technologies  .swiper-slide{
         width: 130px;
         height: 130px;
-    }  
+    }
     .home .technologies .swiper-slide img{
         width: 35%;
-    
+
     }
     .home .technologies .swiper-slide span{
         font-size: 9px;
@@ -479,7 +478,7 @@
 
     .home .technologies  .swiper-technologies{
         width: 110px;
-        height: 60vh;
+        height: clamp(300px, 55vh, 460px);
     }
     
     .home .technologies  .swiper-slide{

@@ -1,10 +1,13 @@
 /* contact section style */
 .contact{
     display: flex;
-    padding: 100px;
-    justify-content: space-between;
+    padding: 100px 40px 62px;
+    justify-content: center;
     align-items: flex-start;
-    padding-bottom: 62px;
+    gap: 80px;
+    max-width: 1400px;
+    width: 100%;
+    margin: 0 auto;
 }
 .contact .content{
     display: flex;
@@ -162,10 +165,10 @@ transform: rotate(-129deg);
 @media(max-width:1220px){
     .contact{
         display: flex;
-        padding: 40px;
-        justify-content: space-between;
+        padding: 40px 40px 62px;
+        justify-content: center;
         align-items: center;
-        padding-bottom: 62px;
+        gap: 60px;
     }
     .contact .content{
         display: flex;
