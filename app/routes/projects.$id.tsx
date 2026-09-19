@@ -1,14 +1,10 @@
 import Navbar from '~/components/Navbar';
-import projectidcss from '../project_id.css';
-import ContactSection from '~/components/ContactSection';
-import { MetaFunction, useLoaderData } from '@remix-run/react';
-import TechnoCarousel from '~/components/TechnoCarousel';
+import projectidcss from '~/project_id.css';
+import { Link, MetaFunction, useLoaderData } from '@remix-run/react';
 import swipercss from 'swiper/css';
-import 'swiper/css/pagination';
-
-import { Swiper, SwiperSlide } from 'swiper/react';
-import swipercoverflowcss from 'swiper/css/effect-coverflow';
+import swiperpaginationcss from 'swiper/css/pagination';
 import swipernavigationcss from 'swiper/css/navigation';
+import { Swiper, SwiperSlide } from 'swiper/react';
 import { Autoplay, Navigation, Pagination } from 'swiper/modules';
 import { LinksFunction, LoaderFunctionArgs, json } from '@remix-run/node';
 import { projects } from '~/content';
@@ -16,208 +12,168 @@ import { projects } from '~/content';
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: projectidcss },
   { rel: 'stylesheet', href: swipercss },
-  { rel: 'stylesheet', href: swipercoverflowcss },
+  { rel: 'stylesheet', href: swiperpaginationcss },
   { rel: 'stylesheet', href: swipernavigationcss },
 ];
-export const loader = async ({ params }: LoaderFunctionArgs) => {
-  console.log(params.id);
-  return json({ project: projects.find((proj) => proj.id === params.id)! });
+
+export const loader = ({ params }: LoaderFunctionArgs) => {
+  const project = projects.find((proj) => proj.id === params.id);
+  if (!project) {
+    throw new Response('Not Found', { status: 404 });
+  }
+  return json({ project });
 };
-export const meta: MetaFunction = () => {
-  const title = 'Adel Mohamed Tadjerouni Projects';
-  const description =
-    'Adel Mohamed Tadjerouni personal website with projects, skills and contact informations';
+
+export const meta: MetaFunction<typeof loader> = ({ data }) => {
+  const project = data?.project;
+  const title = project
+    ? `${project.name} — Adel Tadjerouni`
+    : 'Projects — Adel Tadjerouni';
+  const description = project?.short_description ?? 'Adel Mohamed Tadjerouni projects';
   const previewImage = 'https://adeltadjerouni.com/favicon.png';
-  const previewImageAlt = 'Adel Mohamed Tadjerouni website preview';
-  const twitterUsername = '@TadjerouniAdel';
 
   return [
-    {
-      charSet: 'utf-8',
-    },
-    {
-      name: 'viewport',
-      content: 'width=device-width,initial-scale=1',
-    },
-    {
-      title,
-    },
-    {
-      name: 'description',
-      content: description,
-    },
-    {
-      name: 'twitter:card',
-      content: 'summary',
-    },
-    {
-      name: 'twitter:site',
-      content: twitterUsername,
-    },
-    {
-      name: 'twitter:creator',
-      content: twitterUsername,
-    },
-    {
-      name: 'twitter:title',
-      content: title,
-    },
-    {
-      name: 'twitter:description',
-      content: description,
-    },
-    {
-      name: 'twitter:image',
-      content: previewImage,
-    },
-    {
-      name: 'twitter:image:alt',
-      content: previewImageAlt,
-    },
-    {
-      property: 'og:title',
-      content: title,
-    },
-    {
-      property: 'og:description',
-      content: description,
-    },
-    {
-      property: 'og:type',
-      content: 'website',
-    },
-    {
-      property: 'og:url',
-      content: 'https://adeltadjerouni.com',
-    },
-    {
-      property: 'og:image',
-      content: previewImage,
-    },
-    {
-      property: 'og:image:alt',
-      content: previewImageAlt,
-    },
-    {
-      property: 'og:image:width',
-      content: '1190',
-    },
-    {
-      property: 'og:image:height',
-      content: '750',
-    },
+    { charSet: 'utf-8' },
+    { name: 'viewport', content: 'width=device-width,initial-scale=1' },
+    { title },
+    { name: 'description', content: description },
+    { name: 'twitter:card', content: 'summary' },
+    { name: 'twitter:title', content: title },
+    { name: 'twitter:description', content: description },
+    { name: 'twitter:image', content: previewImage },
+    { property: 'og:title', content: title },
+    { property: 'og:description', content: description },
+    { property: 'og:type', content: 'website' },
+    { property: 'og:url', content: 'https://adeltadjerouni.com' },
+    { property: 'og:image', content: previewImage },
   ];
 };
-const ProjectItemPage = () => {
+
+export default function ProjectDetail() {
   const { project } = useLoaderData<typeof loader>();
 
   return (
-    <>
+    <div className="page">
       <Navbar />
-      <main className="project-id">
-        <h1>
-          <div className="project-image">
+      <div className="project-wrap">
+        <Link to="/projects" className="project-back">
+          <svg
+            width="14"
+            height="14"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            aria-hidden="true"
+          >
+            <path d="M19 12H6" />
+            <path d="m12 19-7-7 7-7" />
+          </svg>
+          All projects
+        </Link>
+
+        <header className="project-header">
+          <div className="project-header__logo">
             <img
               src={project.project_logo}
-              alt="adel mohamed tadjerouni project logo"
+              alt={`${project.name} logo`}
             />
           </div>
-          <span>{project.name}</span>
-        </h1>
-        <section className="preview">
+          <div className="project-header__title">
+            <span className="project-header__type">{project.type}</span>
+            <h1 className="project-header__name">{project.name}</h1>
+            <p className="project-header__short">{project.short_description}</p>
+          </div>
+        </header>
+
+        <section className="project-preview">
           <Swiper
-            grabCursor={true}
+            grabCursor
             modules={[Autoplay, Pagination, Navigation]}
             autoplay={{ delay: 5000 }}
-            spaceBetween={50}
+            spaceBetween={24}
             speed={500}
             loop
             navigation
-            pagination={{
-              dynamicBullets: true,
-            }}
+            pagination={{ dynamicBullets: true }}
             slidesPerView={1}
-            className="screen-swiper"
+            className="project-swiper"
           >
-            {project?.screens.map((screen, index) => (
-              <SwiperSlide key={index}>
-                <img
-                  src={screen}
-                  alt="adel mohamed tadjerouni project screen"
-                />
+            {project.screens.map((screen, index) => (
+              <SwiperSlide key={`${screen}-${index}`}>
+                <img src={screen} alt={`${project.name} screen ${index + 1}`} />
               </SwiperSlide>
             ))}
           </Swiper>
         </section>
-        <section className="content">
-          <div className="description">
-            <h3>Brief Description</h3>
-            <p>{project?.description}</p>
+
+        <section className="project-body">
+          <div className="project-desc">
+            <span className="eyebrow">About the project</span>
+            <p>{project.description}</p>
           </div>
-          <div
-            style={{
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'space-between',
-              gap: 30,
-            }}
-          >
-            <div className="info">
-              <h3>Project Info</h3>
-              <div>
-                <div className="project-logo">
+          <aside className="project-side">
+            <div className="project-info">
+              <span className="eyebrow">Project info</span>
+              <div className="project-info__row">
+                <div className="project-info__logo">
                   <img
                     src={project.company_logo}
-                    alt="adel mohamed tadjerouni company logo"
+                    alt={`${project.company} logo`}
                   />
                 </div>
-                <div className="project-info-content">
-                  <span>{project.company}</span>
-                  <span>{project.date}</span>
-                  <span>{project.role}</span>
+                <div className="project-info__meta">
+                  <span className="project-info__company">{project.company}</span>
+                  <span className="project-info__date">{project.date}</span>
+                  {project.role && (
+                    <span className="project-info__role">{project.role}</span>
+                  )}
                 </div>
               </div>
             </div>
-            {project.code_link ||
-              (project.demo_link && (
-                <div className="links">
-                  <h3>Project links </h3>
-                  <ul>
-                    {project.code_link && (
-                      <li>
-                        <a
-                          rel="noreferrer"
-                          href={project.code_link}
-                          target="_blank"
-                        >
-                          Code source
-                        </a>
-                      </li>
-                    )}
-                    {project.demo_link && (
-                      <li>
-                        <a
-                          rel="noreferrer"
-                          href={project.demo_link}
-                          target="_blank"
-                        >
-                          Live Demo
-                        </a>
-                      </li>
-                    )}
-                  </ul>
+            {(project.code_link || project.demo_link) && (
+              <div className="project-links">
+                <span className="eyebrow">Links</span>
+                <div className="project-links__list">
+                  {project.code_link && (
+                    <a
+                      href={project.code_link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn-ghost"
+                    >
+                      Source code
+                    </a>
+                  )}
+                  {project.demo_link && (
+                    <a
+                      href={project.demo_link}
+                      target="_blank"
+                      rel="noreferrer"
+                      className="btn-primary"
+                    >
+                      Live demo
+                    </a>
+                  )}
                 </div>
-              ))}
+              </div>
+            )}
+          </aside>
+        </section>
+
+        <section className="project-tech">
+          <span className="eyebrow">Technologies</span>
+          <div className="project-tech__list">
+            {project.technologies.map((techno) => (
+              <span key={techno} className="tag">
+                {techno}
+              </span>
+            ))}
           </div>
         </section>
-        <section className="technologies">
-          <h3>Technologies:</h3>
-          <TechnoCarousel skills={project.technologies} />
-        </section>
-      </main>
-      <ContactSection />
-    </>
+      </div>
+    </div>
   );
-};
-
-export default ProjectItemPage;
+}

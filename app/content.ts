@@ -314,6 +314,133 @@ export const projects:Project[]= [
 
 
 
+export type ResumeExperience = {
+  slug: string;
+  company: string;
+  logo: string;
+  initial: string;
+  role: string;
+  dates: string;
+  location: string;
+  current: boolean;
+  order: string;
+  tagline: string;
+  summary: string;
+  bullets: string[];
+  stack: string[];
+};
+
+export const site = {
+  name: 'Adel Tadjerouni',
+  email: 'mohnagato@gmail.com',
+  location: 'Algiers, Algeria',
+  resumePdf: '/resume-v5.1.5.pdf',
+};
+
+export const resumeExperiences: ResumeExperience[] = [
+  {
+    slug: 'emploipartner',
+    company: 'EmploiPartner',
+    logo: '/images/ep_logo.png',
+    initial: 'E',
+    role: 'Full Stack Developer (Web & Mobile)',
+    dates: 'Nov 2018 — Oct 2020',
+    location: 'Algiers, Algeria',
+    current: false,
+    order: '01',
+    tagline: 'Algerian e-recruitment platform',
+    summary:
+      'My first role, and a broad one — web and mobile, front and back. I shipped a CRM and a hiring app from scratch, and moved the existing platform off legacy jQuery.',
+    bullets: [
+      'Reached **5,000+ downloads** with Khadmni, a React Native and Firebase app built for hospitality hiring — a sector generic job boards served poorly.',
+      'Automated invoicing and lead tracking for **30+ client businesses** by taking the Builleo CRM (Symfony, MySQL) from concept to deployment, replacing manual tracking.',
+      'Cut page load times by **35%** by migrating slow legacy jQuery pages to React and Redux.',
+    ],
+    stack: [
+      'PHP',
+      'Symfony',
+      'MySQL',
+      'jQuery',
+      'React',
+      'Redux',
+      'React Native',
+      'Firebase',
+      'Jest',
+      'Docker',
+      'GitLab',
+    ],
+  },
+  {
+    slug: 'cleverzone',
+    company: 'Cleverzone',
+    logo: '/images/cleverzone2.png',
+    initial: 'C',
+    role: 'Software Engineer',
+    dates: 'Jan 2021 — Mar 2022',
+    location: 'Algiers, Algeria',
+    current: false,
+    order: '02',
+    tagline: 'Software company building its own products and client platforms',
+    summary:
+      'Cleverzone builds its own products alongside client platforms, mostly healthtech and research. I was the frontend engineer on two of them — and brought a testing practice the team kept.',
+    bullets: [
+      'Moved bookings and medical records online for **15+ clinics and 3,000+ patients** by building Docta, a WCAG-accessible telemedicine app (React, TypeScript, Redux) replacing phone booking and scattered records.',
+      'Linked researchers directly to investors by building the Next.js frontend of EENAR, an accessible social research network.',
+      "Reduced production bugs by **40%** by introducing unit, component and E2E testing (Jest, React Testing Library, Cypress) and Storybook into the team's release process.",
+    ],
+    stack: [
+      'TypeScript',
+      'React',
+      'Next.js',
+      'Redux',
+      'Styled Components',
+      'Jest',
+      'React Testing Library',
+      'Storybook',
+      'Cypress',
+      'Docker',
+      'GitHub',
+    ],
+  },
+  {
+    slug: 'scalexp',
+    company: 'ScaleXP',
+    logo: '/images/scalexp-icon.svg',
+    initial: 'S',
+    role: 'Frontend Developer',
+    dates: 'Sep 2022 — Present',
+    location: 'London, UK · Remote',
+    current: true,
+    order: '03',
+    tagline: 'London fintech SaaS automating financial reporting and analytics',
+    summary:
+      'I own features end to end for a reporting platform used by **1,200+ companies** — React and Styled Components in front, Python/Django behind — from onboarding and dashboards through to accounting integrations and Stripe billing.',
+    bullets: [
+      'Replaced manual customer onboarding with a **self-serve flow**: creating an organisation, importing accounting data and setting it up — work the team previously did by hand.',
+      'Kept financial dashboards fast as data grew, including migrating charts off legacy amCharts 4, which struggled with large datasets, to amCharts 5.',
+      'Let customers subscribe and upgrade on their own by building the full **Stripe** subscription flow, so upgrades no longer need the team.',
+      'Opened the platform to **Zoho Books** users with a Python/Django importer pulling their complete accounting data into a product that had no Zoho integration before.',
+      'Cut manual reporting work by **30%** by automating workflows between Salesforce/HubSpot and Xero/QuickBooks, and hardening those integrations against upstream API changes that used to break syncs.',
+      'Caught regressions before customers did by adding unit, functional and E2E tests (Jest, React Testing Library, Playwright) to core flows, backed by visual checks, AI PR review and Sentry.',
+      "Flagged UX, accessibility and code issues early by reviewing designs for usability, WCAG compliance and technical feasibility, and reviewing teammates' pull requests.",
+    ],
+    stack: [
+      'TypeScript',
+      'React',
+      'Redux',
+      'Styled Components',
+      'amCharts 5',
+      'Python',
+      'Django',
+      'Jest',
+      'React Testing Library',
+      'Playwright',
+      'Docker',
+      'GitHub',
+    ],
+  },
+];
+
 export const experiences = [
   {
     title:"Full Stack Developer",

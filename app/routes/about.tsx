@@ -2,11 +2,10 @@ import { LinksFunction, MetaFunction } from '@remix-run/node';
 import { useState } from 'react';
 import { Lightbox } from 'yet-another-react-lightbox';
 import lightboxStylesImport from 'yet-another-react-lightbox/styles.css';
-
-const lightboxStyles = lightboxStylesImport as unknown as string;
 import aboutcss from '~/about.css';
 import Navbar from '~/components/Navbar';
-import ContactSection from '~/components/ContactSection';
+
+const lightboxStyles = lightboxStylesImport as unknown as string;
 
 export const links: LinksFunction = () => [
   { rel: 'stylesheet', href: aboutcss },
@@ -14,9 +13,9 @@ export const links: LinksFunction = () => [
 ];
 
 export const meta: MetaFunction = () => {
-  const title = 'Adel Mohamed Tadjerouni Aboutme';
+  const title = 'Adel Mohamed Tadjerouni — About';
   const description =
-    'Adel Mohamed Tadjerouni personal website with projects, skills and contact informations';
+    'Building for the web since 2018. Data-heavy B2B products across fintech, healthtech and HR tech.';
   const previewImage = 'https://adeltadjerouni.com/favicon.png';
   const previewImageAlt = 'Adel Mohamed Tadjerouni website preview';
   const twitterUsername = '@TadjerouniAdel';
@@ -44,172 +43,187 @@ export const meta: MetaFunction = () => {
   ];
 };
 
-const emploiPartnerAlt = 'adel mohamed tadjerouni emploi partner team';
-const cleverzoneAlt = 'adel mohamed tadjerouni cleverzone team';
-const scalexpAlt = 'adel mohamed tadjerouni scalexp team';
+const portrait = {
+  src: '/images/my-pic/cabine2.jpg',
+  alt: 'Adel Mohamed Tadjerouni portrait',
+};
 
-const careerImages = [
-  { src: '/images/my-pic/IMAG0567.jpg', alt: emploiPartnerAlt },
-  { src: '/images/my-pic/team2.jpeg', alt: 'Adel team gathering empoipartner' },
+const gallery = [
   {
-    src: '/images/my-pic/IMG-5013a3de135d2e7f4646fef5664a4514-V.jpg',
-    alt: emploiPartnerAlt,
+    src: '/images/my-pic/team5.jpg',
+    alt: 'ScaleXP team remote meetup',
+    caption: 'ScaleXP team · remote meetup',
+    wide: true,
   },
   {
-    src: '/images/my-pic/IMG-627694dfb03e4ed4cbd98d4ff8c3d715-V.jpg',
-    alt: emploiPartnerAlt,
+    src: '/images/my-pic/desk2.jpg',
+    alt: "Adel's desk setup",
+    caption: 'Desk setup',
+    wide: false,
   },
   {
-    src: '/images/my-pic/IMG-fa7c22a758567f3cef94219a9ca5aa1c-V.jpg',
-    alt: emploiPartnerAlt,
+    src: '/images/my-pic/team3.jpeg',
+    alt: 'Cleverzone office in Algiers',
+    caption: 'Cleverzone office · Algiers',
+    wide: false,
   },
   {
-    src: '/images/my-pic/received_1011234773019364.jpeg',
-    alt: emploiPartnerAlt,
+    src: '/images/my-pic/team2.jpeg',
+    alt: 'EmploiPartner team in 2019',
+    caption: 'EmploiPartner team · 2019',
+    wide: false,
   },
   {
-    src: '/images/my-pic/received_1482586212122921.jpeg',
-    alt: emploiPartnerAlt,
+    src: '/images/my-pic/IMAG0567.jpg',
+    alt: 'Graduation at University of Algiers 1 in 2018',
+    caption: 'Graduation · Algiers 1, 2018',
+    wide: false,
   },
-  { src: '/images/my-pic/received_156444006248487.jpeg', alt: cleverzoneAlt },
-  { src: '/images/my-pic/team3.jpeg', alt: 'Adel with team cleverzone' },
-  { src: '/images/my-pic/received_1055727361953965.jpeg', alt: cleverzoneAlt },
-  { src: '/images/my-pic/received_686373632739788.jpeg', alt: cleverzoneAlt },
   {
-    src: '/images/my-pic/temp_image_20210217_093514_b822bc0f-8fc1-44c1-990f-497a079045d9.jpg',
-    alt: cleverzoneAlt,
+    src: '/images/my-pic/PXL_20230925_090953627.jpg',
+    alt: 'Conference and meetup',
+    caption: 'Conference / meetup',
+    wide: false,
   },
-  { src: '/images/my-pic/IMG_2574.HEIC', alt: scalexpAlt },
-  { src: '/images/my-pic/scalpng.png', alt: scalexpAlt },
-  { src: '/images/my-pic/IMG_9650.jpg', alt: scalexpAlt },
-  { src: '/images/my-pic/team1.jpg', alt: 'Adel with team at work' },
-  { src: '/images/my-pic/friends.jpg', alt: 'Adel with friends' },
-  { src: '/images/my-pic/20240126_173019.jpg', alt: scalexpAlt },
-  { src: '/images/my-pic/me2.jpg', alt: 'Adel portrait' },
-  { src: '/images/my-pic/team5.jpg', alt: 'Adel with colleagues scalexp' },
-  { src: '/images/my-pic/desk2.jpg', alt: "Adel's home office" },
-  { src: '/images/my-pic/team3.jpg', alt: 'Adel team meeting' },
-  { src: '/images/my-pic/me1.jpg', alt: 'Adel portrait two' },
+  {
+    src: '/images/my-pic/friends.jpg',
+    alt: 'Weekend with family and friends',
+    caption: 'Weekend · family',
+    wide: true,
+  },
 ];
 
-export default function Index() {
+const facts = [
+  ['Based', 'Algiers, Algeria'],
+  ['Experience', '7+ years'],
+  ['Currently', 'ScaleXP'],
+];
+
+const interests = ['Fitness', 'Gaming', 'Family'];
+
+const languages = [
+  ['Arabic', 'Native'],
+  ['French', 'Fluent'],
+  ['English', 'Fluent'],
+];
+
+const slides = [portrait, ...gallery];
+
+export default function About() {
   const [lightboxIndex, setLightboxIndex] = useState(-1);
 
   return (
-    <>
+    <div className="page">
       <Navbar />
-      <main>
-        <section className="aboutme">
-          <div className="inner">
-            <div className="content">
-              <h2>Let’s discover more about Me</h2>
-              <p>
-                Since 2018, I have been working as a software developer. Over
-                recent years I have developed a diverse range of skills that are
-                essential for this role and that have enabled me to become a
-                competent and knowledgeable asset to any team. I learned to take
-                ownership of challenges and problems, being a good communicator
-                and I always support my co-workers in the execution of their
-                duties. In my last role my manager often praised me for the fact
-                that I would always deliver excellent and fast customer requests
-                by adding or updating features on our platform, which helped
-                increase sales and it also helped to improve online reviews.
-                Outside of work I like to go to the gym, play games and enjoy
-                being close to my family and my friends. Those things that bring
-                me happiness and increase my productivity and motivation while I
-                am at work.
-              </p>
+      <div className="about-wrap">
+        <section className="about-grid">
+          <button
+            type="button"
+            className="about-portrait"
+            onClick={() => setLightboxIndex(0)}
+            aria-label="Open portrait in full screen"
+          >
+            <img src={portrait.src} alt={portrait.alt} />
+          </button>
+
+          <div className="about-intro">
+            <span className="eyebrow">About me</span>
+            <h1 className="about-title">Building for the web since&nbsp;2018.</h1>
+            <p className="about-lead">
+              I build data-heavy B2B products — fintech, healthtech, HR tech. I
+              started across the full stack at EmploiPartner, narrowed into
+              frontend work at Cleverzone, and now own features end to end at
+              ScaleXP, whose reporting platform serves 1,200+ companies.
+            </p>
+            <p className="about-body">
+              What has stayed constant is caring about the details other people
+              skip: how fast a page feels once there is real data in it, whether
+              a form works from the keyboard, what the screen does when the
+              request fails. I would rather over-communicate than leave someone
+              guessing.
+            </p>
+
+            <div className="about-facts">
+              {facts.map(([label, value]) => (
+                <div key={label} className="about-fact">
+                  <span className="eyebrow">{label}</span>
+                  <span className="about-fact__value">{value}</span>
+                </div>
+              ))}
             </div>
-            <div className="imgBox">
-              <img
-                src="/images/my-pic/cabine2.jpg"
-                alt="adel mohamed tadjerouni portrait"
-              />
-            </div>
-          </div>
-        </section>
-        <section className="education">
-          <div className="inner">
-            <div className="imgBox">
-              <img
-                src="/images/my-pic/me1.jpg"
-                alt="adel mohamed tadjerouni education"
-              />
-            </div>
-            <div className="content">
-              <h2>My Education</h2>
-              <ul>
-                <li>
-                  <h3>Bachelor degree</h3>
-                  <p>
-                    Information systems and software engineering, University of
-                    Algiers 1, (Algiers, Algeria) <br />
-                    2015 - 2018
-                  </p>
-                </li>
-                <li>
-                  <h3>Baccalauréat 2015</h3>
-                  <p>
-                    Baccalauréat diploma math curriculum is an integrated
-                    curriculum. Algebra, Geometry, Trigonometry, Probabilities
-                    and Calculus courses are taught together and studied at
-                    different depths throughout the four-year high school
-                    curriculum.
-                  </p>
-                </li>
-              </ul>
-            </div>
-          </div>
-        </section>
-        <section className="career">
-          <div className="inner">
-            <div className="content">
-              <h2>My Personal Career Evolution</h2>
-              <p>
-                My first steps in the web development industry was in 2018. I
-                worked as a full stack developer at Emploipartner.com which is
-                an e-recruitment company. I had the responsibility to maintain
-                and develop the internal applications for the company.
-                <br />
-                <br />
-                Then after 2 years at Emploipartner, I moved to another exciting
-                role as a Front end developer at cleverzone.io, in this company
-                I worked only on the frontend part so I had the responsibilities
-                of implementing user interfaces based on wireframe and screen
-                designs provided by our designers, help the team by analyzing
-                and correcting errors and being involved on the conception of
-                new features.
-                <br />
-                <br />
-                Now I am working with scaleXP as a frontend developer (since Sep
-                2022), I am focusing on implementing changes to the frontend
-                including ux improvements, tests, and adding new features to
-                ScaleXP platform by collaborating with the product team to
-                understand our customers’ needs.
-              </p>
-            </div>
-            <div className="images">
-              {careerImages.map((image, index) => (
-                <button
-                  key={image.src}
-                  type="button"
-                  onClick={() => setLightboxIndex(index)}
-                  aria-label={`Open ${image.alt} in full screen`}
-                >
-                  <img src={image.src} alt={image.alt} loading="lazy" />
-                </button>
+
+            <div className="about-interests">
+              <span className="eyebrow">Off the clock</span>
+              {interests.map((interest) => (
+                <span key={interest} className="tag">
+                  {interest}
+                </span>
               ))}
             </div>
           </div>
         </section>
-        <Lightbox
-          open={lightboxIndex >= 0}
-          index={lightboxIndex < 0 ? 0 : lightboxIndex}
-          close={() => setLightboxIndex(-1)}
-          slides={careerImages}
-        />
-      </main>
-      <ContactSection />
-    </>
+
+        <section className="about-photos">
+          <div className="about-photos__head">
+            <div className="about-photos__title">
+              <span className="eyebrow">Photos</span>
+              <h2 className="about-heading">
+                The people and places behind the CV
+              </h2>
+            </div>
+            <span className="about-photos__note rail-hide">
+              7 slots · click any to enlarge
+            </span>
+          </div>
+
+          <div className="gallery">
+            {gallery.map((photo, index) => (
+              <figure
+                key={photo.src}
+                className={`gallery-item ${photo.wide ? 'wide' : ''}`}
+              >
+                <button
+                  type="button"
+                  onClick={() => setLightboxIndex(index + 1)}
+                  aria-label={`Open ${photo.caption} in full screen`}
+                >
+                  <img src={photo.src} alt={photo.alt} loading="lazy" />
+                </button>
+                <figcaption>{photo.caption}</figcaption>
+              </figure>
+            ))}
+          </div>
+        </section>
+
+        <section className="field about-field">
+          <span className="eyebrow">Education</span>
+          <div className="about-edu">
+            <div className="about-edu__card">
+              <span className="about-edu__years">2015 — 2018</span>
+              <span className="about-edu__degree">
+                Bachelor’s, Information Systems &amp; Software Engineering
+              </span>
+              <span className="about-edu__school">University of Algiers 1</span>
+            </div>
+            <div className="about-lang">
+              <span className="eyebrow">Languages</span>
+              {languages.map(([lang, level]) => (
+                <div key={lang} className="about-lang__row">
+                  <span className="about-lang__name">{lang}</span>
+                  <span className="about-lang__level">{level}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </div>
+
+      <Lightbox
+        open={lightboxIndex >= 0}
+        index={lightboxIndex < 0 ? 0 : lightboxIndex}
+        close={() => setLightboxIndex(-1)}
+        slides={slides}
+      />
+    </div>
   );
 }
