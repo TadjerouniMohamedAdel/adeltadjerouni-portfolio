@@ -1,6 +1,6 @@
 # Stations — daily goals (Android)
 
-Offline Android app built from `SPEC.md` / the `Main.dc.html` prototype: Today · Journey · History · Setup.
+Offline Android app (goal & reward search, editable past days) built from `SPEC.md` / the `Main.dc.html` prototype: Today · Journey · History · Setup.
 
 - **UI**: `assets/` (plain HTML/CSS/JS, fonts bundled — no network needed).
 - **Shell**: `src/app/stations/MainActivity.java` — full-screen WebView, system back handling,
@@ -29,4 +29,6 @@ Min Android 6.0 (API 23), target API 34.
   ahead, but tomorrow can only be closed once it starts.
 - **Rewards after a reset**: rewards belong to the current run; a reset restarts the route
   (History still shows every counted day).
-- **Editing past days**: not allowed; closed days keep a snapshot of the goals.
+- **Editing past days**: History → open a day → "Edit this day" to fix check-ins or that day's
+  minimum. All later days are recounted (each with its own minimum), and the counter follows.
+- **Changing the minimum** in Setup applies from the open day on; closed days keep theirs.

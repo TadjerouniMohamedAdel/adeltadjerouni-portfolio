@@ -176,3 +176,29 @@ header { display: flex; flex-direction: column; gap: 5px; }
 .sheet.reward { background: var(--rw-soft); }
 @keyframes fade { from { opacity: 0; } }
 @keyframes rise { from { transform: translateY(40px); opacity: 0; } }
+
+[hidden] { display: none !important; }
+
+/* Search */
+.search { position: relative; display: flex; align-items: center; }
+.search-ic { position: absolute; left: 14px; color: var(--muted); pointer-events: none; }
+.search input { width: 100%; height: 46px; padding: 0 46px 0 42px; box-sizing: border-box; border: 1px solid var(--line); border-radius: 14px; background: var(--card); font-size: 15px; font-weight: 500; -webkit-appearance: none; appearance: none; }
+.search input::-webkit-search-cancel-button { display: none; }
+.search input::placeholder { color: #8C8F86; }
+.search-x { position: absolute; right: 4px; width: 40px; height: 40px; border: 0; background: transparent; color: var(--muted); display: flex; align-items: center; justify-content: center; }
+.search-x svg { width: 14px; height: 14px; }
+.nomatch { padding: 16px; }
+.nomatch span { font-weight: 700; color: var(--ink); }
+
+/* Edit a past day */
+.day li.editable { cursor: pointer; min-height: 36px; border-radius: 8px; }
+.day li.editable:active { background: #F3EFE6; }
+.day-edit { display: flex; flex-direction: column; gap: 12px; padding: 0 14px 14px; }
+.day-edit .edit-btn { align-self: flex-start; }
+.edit-lbl { font-size: 14px; font-weight: 700; }
+.edit-preview { padding: 10px 12px; background: var(--paper); border-radius: 12px; }
+.day-edit .btns { display: flex; gap: 10px; }
+.day-edit .btns button { flex: 1; min-height: 48px; border: 0; border-radius: 14px; background: var(--ink); color: var(--paper); font-size: 15px; font-weight: 700; }
+.day-edit .btns button.ghost { background: var(--hold); color: var(--ink); }
+.edited-tag { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-left: 6px; }
+.min-note { margin: -4px 0 0; font-size: 12.5px; line-height: 1.4; color: #C9C5BA; }
