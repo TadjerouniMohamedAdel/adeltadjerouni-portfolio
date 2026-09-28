@@ -7,6 +7,7 @@
 
   var STORE_KEY = 'stations.state.v1';
   var MAX_CATCH_UP = 400;
+  var GRID_DAYS = 90;
 
   // ---------------------------------------------------------------- dates
   function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -357,11 +358,13 @@
   }
 
   function renderHistory() {
-    var lastN = S.history.slice(-30);
+    var lastN = S.history.slice(-GRID_DAYS);
+    var offset = S.history.length - lastN.length;
     var cells = '';
-    for (var i = 0; i < 30; i++) {
+    for (var i = 0; i < GRID_DAYS; i++) {
       var h = lastN[i];
-      cells += h ? '<span class="' + h.result + '" title="' + esc(fmt(h.date) + ' · ' + h.score + '/' + h.minScore) + '"></span>' : '<span></span>';
+      cells += h ? '<button type="button" class="' + h.result + (ui.openDate === offset + i ? ' sel' : '') + '" data-a="jumpDay" data-idx="' + (offset + i) + '" aria-label="' +
+        esc(fmt(h.date) + ' · ' + h.score + '/' + h.minScore) + '"></button>' : '<span></span>';
     }
     function cnt(r) { return lastN.filter(function (h) { return h.result === r; }).length; }
 
@@ -400,7 +403,7 @@
         '<span class="res ' + h.result + '">' + pill + '</span>' + I.chev + '</button>' + items + '</div>';
     }).reverse().join('');
 
-    return '<div class="screen"><header><span class="kicker">Last ' + (lastN.length || 30) + ' days</span><h1 class="h1">History</h1></header>' +
+    return '<div class="screen"><header><span class="kicker">Last ' + (lastN.length || GRID_DAYS) + ' days</span><h1 class="h1">History</h1></header>' +
       '<section class="panel" aria-label="Overview"><div class="grid">' + cells + '</div>' +
       '<div class="legend"><span><i style="background:#1E6A50"></i>Counted · ' + cnt('count') + '</span>' +
       '<span><i style="background:#D6D0C2"></i>No change · ' + cnt('hold') + '</span>' +
@@ -549,6 +552,14 @@
       ui.openDate = ui.openDate === i ? null : i;
       if (ui.openDate === null) ui.edit = null;
       render();
+    },
+    jumpDay: function (el) {
+      var i = Number(el.getAttribute('data-idx'));
+      if (ui.edit && ui.edit.idx !== i) ui.edit = null;
+      ui.openDate = i;
+      render();
+      var head = main.querySelector('.day-head[data-idx="' + i + '"]');
+      if (head) head.parentNode.scrollIntoView({ behavior: 'smooth', block: 'start' });
     },
     editDay: function (el) {
       var h = S.history[Number(el.getAttribute('data-idx'))];

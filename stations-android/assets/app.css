@@ -102,8 +102,9 @@ header { display: flex; flex-direction: column; gap: 5px; }
 
 /* History */
 .panel { display: flex; flex-direction: column; gap: 12px; background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 16px; }
-.grid { display: grid; grid-template-columns: repeat(10, minmax(0, 1fr)); gap: 5px; }
-.grid span { aspect-ratio: 1; border-radius: 6px; background: #EFEBE1; }
+.grid { display: grid; grid-template-columns: repeat(15, minmax(0, 1fr)); gap: 4px; }
+.grid span, .grid button { aspect-ratio: 1; border-radius: 4px; background: #EFEBE1; border: 0; padding: 0; margin: 0; min-width: 0; }
+.grid button.sel { box-shadow: 0 0 0 2px var(--card), 0 0 0 4px var(--ink); position: relative; z-index: 1; }
 .grid .count { background: var(--ok); } .grid .hold { background: #D6D0C2; } .grid .reset { background: var(--rw-bright); }
 .legend { display: flex; gap: 14px; flex-wrap: wrap; font-size: 12px; font-weight: 500; color: #3F433C; }
 .legend span { display: flex; align-items: center; gap: 6px; }
