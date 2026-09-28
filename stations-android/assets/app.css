@@ -16,7 +16,7 @@
 * { -webkit-tap-highlight-color: transparent; }
 html, body { margin: 0; height: 100%; background: var(--paper); color: var(--ink); overscroll-behavior: none; }
 body { font-family: 'Instrument Sans', system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
-button, input { font-family: inherit; color: inherit; }
+button, input, textarea { font-family: inherit; color: inherit; }
 button { cursor: pointer; -webkit-user-select: none; user-select: none; }
 button:disabled { cursor: default; }
 button:focus-visible, input:focus-visible { outline: 2px solid var(--rw); outline-offset: 2px; }
@@ -157,9 +157,9 @@ header { display: flex; flex-direction: column; gap: 5px; }
 .foot { font-size: 12px; color: var(--muted); text-align: center; line-height: 1.5; padding: 6px 0 4px; }
 
 /* Nav */
-#nav { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; padding: 8px 10px 10px; background: var(--card); border-top: 1px solid var(--line); }
+#nav { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 2px; padding: 8px 6px 10px; background: var(--card); border-top: 1px solid var(--line); }
 #nav button { display: flex; flex-direction: column; align-items: center; gap: 4px; min-height: 56px; padding: 6px 0; border: 0; background: transparent; font-size: 12px; font-weight: 600; color: var(--muted); }
-#nav button .pad { width: 56px; height: 30px; border-radius: 15px; display: flex; align-items: center; justify-content: center; transition: background .2s; }
+#nav button .pad { width: 52px; height: 30px; border-radius: 15px; display: flex; align-items: center; justify-content: center; transition: background .2s; }
 #nav button[aria-current="page"] { color: var(--ink); }
 #nav button[aria-current="page"] .pad { background: #E6E1D5; }
 
@@ -203,3 +203,11 @@ header { display: flex; flex-direction: column; gap: 5px; }
 .day-edit .btns button.ghost { background: var(--hold); color: var(--ink); }
 .edited-tag { font-size: 10px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); margin-left: 6px; }
 .min-note { margin: -4px 0 0; font-size: 12.5px; line-height: 1.4; color: #C9C5BA; }
+
+/* NoFap */
+.nf-item { display: flex; gap: 8px; align-items: flex-start; padding: 8px 8px 8px 12px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; }
+.nf-num { width: 24px; height: 24px; margin-top: 10px; flex-shrink: 0; border-radius: 8px; background: var(--ink); color: var(--paper); font-family: var(--display); font-size: 13px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.nf-text { display: block; height: auto; min-height: 44px; padding: 11px 12px; line-height: 1.4; resize: none; overflow: hidden; font-weight: 500; }
+.nf-sec:nth-child(2) .nf-num { background: var(--rw); }
+.nf-sec:nth-child(3) .nf-num { background: var(--ok); }
+.nf-sec:nth-child(4) .nf-num { background: #3F433C; }

@@ -8,6 +8,11 @@
   var STORE_KEY = 'stations.state.v1';
   var MAX_CATCH_UP = 400;
   var GRID_DAYS = 90;
+  var NOFAP_LISTS = [
+    { key: 'immediate', title: 'Immediate action list', hint: 'What to do the moment an urge hits.', add: 'Add action' },
+    { key: 'offensive', title: 'Offensive tactics', hint: 'Habits that build you up and keep you busy.', add: 'Add tactic' },
+    { key: 'defensive', title: 'Defensive tactics', hint: 'Barriers that keep triggers away.', add: 'Add tactic' }
+  ];
 
   // ---------------------------------------------------------------- dates
   function pad(n) { return (n < 10 ? '0' : '') + n; }
@@ -55,7 +60,8 @@
       counter: 0,
       today: localToday(),
       doneToday: {},
-      history: []
+      history: [],
+      nofap: { immediate: [], offensive: [], defensive: [] }
     };
   }
 
@@ -72,6 +78,8 @@
       s.settings = s.settings || { minScore: 1 };
       s.doneToday = s.doneToday || {};
       s.counter = s.counter || 0;
+      s.nofap = s.nofap || {};
+      NOFAP_LISTS.forEach(function (l) { if (!Array.isArray(s.nofap[l.key])) s.nofap[l.key] = []; });
       s.today = s.today || localToday();
       return s;
     } catch (e) { return defaultState(); }
@@ -210,6 +218,7 @@
     tToday: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16 9.8"/></svg>',
     tJourney: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="5" r="2.2"/><path d="M8.2 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.8"/></svg>',
     tHistory: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
+    tNofap: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6L12 3z"/><path d="M8.8 12.2l2.2 2.2 4.2-4.4"/></svg>',
     tSetup: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>'
   };
 
@@ -454,8 +463,32 @@
       '</div>';
   }
 
+  function renderNofap() {
+    var sections = NOFAP_LISTS.map(function (l) {
+      var items = S.nofap[l.key];
+      var rows = items.map(function (it, i) {
+        return '<div class="nf-item"><span class="nf-num">' + (i + 1) + '</span>' +
+          '<textarea class="field nf-text" rows="1" maxlength="500" aria-label="' + esc(l.title) + ' item ' + (i + 1) + '" placeholder="Write it here…" data-a="nfEdit" data-list="' + l.key + '" data-id="' + esc(it.id) + '">' + esc(it.text) + '</textarea>' +
+          '<button type="button" class="icon-btn" aria-label="Delete item" data-a="nfRemove" data-list="' + l.key + '" data-id="' + esc(it.id) + '">' + I.trash + '</button></div>';
+      }).join('');
+      return '<section class="stack nf-sec" style="gap:10px" aria-labelledby="nf-' + l.key + '">' +
+        '<div class="col"><h2 id="nf-' + l.key + '" class="h2">' + l.title + '</h2><span class="sub" style="font-weight:400" data-nfcount="' + l.key + '">' + nfCountText(l) + '</span></div>' + rows +
+        '<button type="button" class="dashed" data-a="nfAdd" data-list="' + l.key + '">' + I.plus + l.add + '</button></section>';
+    }).join('');
+    return '<div class="screen wide-gap"><header><span class="kicker">Your plan</span><h1 class="h1">NoFap</h1></header>' + sections + '</div>';
+  }
+
+  function nfCountText(l) {
+    var n = S.nofap[l.key].length;
+    return (n ? plural(n, 'item', 'items') + ' · ' : '') + l.hint;
+  }
+
+  function nfFind(list, id) { return S.nofap[list].find(function (x) { return x.id === id; }); }
+
+  function autosize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
+
   function renderNav() {
-    var tabs = [['today', 'Today', I.tToday], ['journey', 'Journey', I.tJourney], ['history', 'History', I.tHistory], ['setup', 'Setup', I.tSetup]];
+    var tabs = [['today', 'Today', I.tToday], ['journey', 'Journey', I.tJourney], ['history', 'History', I.tHistory], ['nofap', 'NoFap', I.tNofap], ['setup', 'Setup', I.tSetup]];
     return tabs.map(function (t) {
       return '<button type="button" data-a="tab" data-tab="' + t[0] + '"' + (ui.tab === t[0] ? ' aria-current="page"' : '') + '>' +
         '<span class="pad">' + t[2] + '</span>' + t[1] + '</button>';
@@ -479,19 +512,29 @@
   var overlay = document.getElementById('overlay');
   var lastTab = null;
 
+  // Blank NoFap items are dropped on the next render, except the one just added.
+  function purgeBlankNofap() {
+    NOFAP_LISTS.forEach(function (l) {
+      S.nofap[l.key] = S.nofap[l.key].filter(function (x) { return x.text.trim() || x.id === ui.nfNew; });
+    });
+  }
+
   function render() {
+    purgeBlankNofap();
     var keepScroll = lastTab === ui.tab ? main.scrollTop : 0;
     var html = ui.tab === 'journey' ? renderJourney() : ui.tab === 'history' ? renderHistory()
-      : ui.tab === 'setup' ? renderSetup() : renderToday();
+      : ui.tab === 'setup' ? renderSetup() : ui.tab === 'nofap' ? renderNofap() : renderToday();
     main.innerHTML = html;
     applyFilters();
+    var tas = main.querySelectorAll('textarea.nf-text');
+    for (var t = 0; t < tas.length; t++) autosize(tas[t]);
     main.scrollTop = keepScroll;
     lastTab = ui.tab;
     nav.innerHTML = renderNav();
     overlay.innerHTML = renderSheet();
   }
 
-  function commit() { clampMin(); save(); render(); }
+  function commit() { clampMin(); purgeBlankNofap(); save(); render(); }
 
   // ---------------------------------------------------------------- actions
   function findGoal(id) { return S.goals.find(function (g) { return g.id === id; }); }
@@ -541,7 +584,7 @@
   }
 
   var actions = {
-    tab: function (el) { ui.tab = el.getAttribute('data-tab'); ui.edit = null; render(); },
+    tab: function (el) { ui.tab = el.getAttribute('data-tab'); ui.edit = null; ui.nfNew = null; render(); },
     toggle: function (el) { var id = el.getAttribute('data-id'); S.doneToday[id] = !S.doneToday[id]; if (!S.doneToday[id]) delete S.doneToday[id]; commit(); },
     addGoalFromToday: function () { addGoal(true); },
     addGoal: function () { addGoal(true); },
@@ -551,6 +594,25 @@
       if (ui.edit && ui.edit.idx !== i) ui.edit = null;
       ui.openDate = ui.openDate === i ? null : i;
       if (ui.openDate === null) ui.edit = null;
+      render();
+    },
+    nfAdd: function (el) {
+      var list = el.getAttribute('data-list');
+      var item = { id: uid('n'), text: '' };
+      ui.nfNew = item.id;
+      S.nofap[list].push(item);
+      commit();
+      var ta = main.querySelector('textarea[data-id="' + item.id + '"]');
+      if (ta) { ta.scrollIntoView({ block: 'center' }); ta.focus(); }
+    },
+    nfRemove: function (el) {
+      var list = el.getAttribute('data-list'), it = nfFind(list, el.getAttribute('data-id'));
+      if (!it) return;
+      var drop = function () { S.nofap[list] = S.nofap[list].filter(function (x) { return x.id !== it.id; }); };
+      if (!it.text.trim()) { drop(); commit(); return; }
+      ui.nfNew = null;
+      ui.sheet = { kind: 'confirm', kicker: 'Delete item', title: it.text.length > 60 ? it.text.slice(0, 57) + '…' : it.text, color: '#7A2F08', ok: 'Delete',
+        body: 'It will be removed from ' + NOFAP_LISTS.filter(function (l) { return l.key === list; })[0].title.toLowerCase() + '.', run: drop };
       render();
     },
     jumpDay: function (el) {
@@ -629,7 +691,7 @@
     },
     askReset: function () {
       ui.sheet = { kind: 'confirm', kicker: 'Erase all data', title: 'Start over?', color: '#7A2F08', ok: 'Erase',
-        body: 'Goals, rewards, your counter and the whole history are deleted from this phone. This cannot be undone.',
+        body: 'Goals, rewards, your counter, the whole history and your NoFap lists are deleted from this phone. This cannot be undone.',
         run: function () { S = defaultState(); ui.openDate = null; ui.edit = null; ui.tab = 'today'; } };
       render();
     },
@@ -657,6 +719,14 @@
     }
     if (a === 'renameGoal') { var g = findGoal(id); if (g) { g.name = el.value; save(); } }
     if (a === 'renameReward') { var r = findReward(id); if (r) { r.name = el.value; save(); } }
+    if (a === 'nfEdit') { var n = nfFind(el.getAttribute('data-list'), id); if (n) { n.text = el.value; save(); } autosize(el); }
+  });
+  document.addEventListener('focusout', function (ev) {
+    var el = ev.target;
+    if (el.getAttribute && el.getAttribute('data-a') === 'nfEdit') {
+      var n = nfFind(el.getAttribute('data-list'), el.getAttribute('data-id'));
+      if (n && n.text !== n.text.trim()) { n.text = n.text.trim(); el.value = n.text; save(); }
+    }
   });
   document.addEventListener('change', function (ev) {
     var el = ev.target, a = el.getAttribute('data-a'), id = el.getAttribute('data-id');
@@ -675,7 +745,7 @@
     }
   });
   document.addEventListener('keydown', function (ev) {
-    if (ev.key === 'Enter' && ev.target.tagName === 'INPUT') ev.target.blur();
+    if (ev.key === 'Enter' && (ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA')) { ev.preventDefault(); ev.target.blur(); }
     if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.getAttribute('data-a') === 'editItem') { ev.preventDefault(); ev.target.click(); }
   });
 
@@ -683,7 +753,7 @@
   window.stationsBack = function () {
     if (ui.sheet) { actions.dismiss(); return true; }
     if (ui.edit) { ui.edit = null; render(); return true; }
-    if (document.activeElement && document.activeElement.tagName === 'INPUT') { document.activeElement.blur(); return true; }
+    if (document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) { document.activeElement.blur(); return true; }
     if (ui.tab !== 'today') { ui.tab = 'today'; render(); return true; }
     return false;
   };
@@ -696,7 +766,7 @@
     if (changed || now !== lastSeenDay) {
       lastSeenDay = now;
       var active = document.activeElement;
-      if (!(active && active.tagName === 'INPUT')) render();
+      if (!(active && /^(INPUT|TEXTAREA)$/.test(active.tagName))) render();
     }
   };
   document.addEventListener('visibilitychange', function () { if (!document.hidden) window.stationsRefresh(); });
@@ -704,6 +774,7 @@
 
   catchUp();
   clampMin();
+  purgeBlankNofap();
   save();
   render();
 })();
