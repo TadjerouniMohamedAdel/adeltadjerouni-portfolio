@@ -1,0 +1,4 @@
+build/
+*.jks
+*.keystore
+tools/icon-512.png
