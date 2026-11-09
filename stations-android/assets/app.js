@@ -236,13 +236,31 @@
   // snapshots; each day keeps its own minimum.
   function replayHistory() {
     var c = 0;
-    S.history.forEach(function (h) {
+    S.history.forEach(function (h, i) {
+      if (i === S.counterResetAt) c = 0; // manual "Reset counters" point
       var o = dayOutcome(h.items, h.minScore);
       h.score = o.score; h.total = o.total; h.result = o.result;
       c = h.result === 'count' ? c + 1 : h.result === 'reset' ? 0 : c;
       h.counterAfter = c;
     });
-    S.counter = c;
+    S.counter = S.history.length === S.counterResetAt ? 0 : c;
+  }
+
+  // Starts a new run: the successful-days counter goes to 0 from the open day
+  // on, and NoFap "clean since" becomes today. Closed days, journal and urges
+  // are kept; the reset point makes later edits of old days leave it at 0.
+  function resetCounters() {
+    S.counterResetAt = S.history.length;
+    S.counterResetOn = localToday();
+    S.counter = 0;
+    S.nofapSince = localToday();
+  }
+
+  // Index of the first closed day of the current run.
+  function runStartIndex() {
+    var start = S.counterResetAt || 0;
+    S.history.forEach(function (h, i) { if (h.result === 'reset' && i + 1 > start) start = i + 1; });
+    return start;
   }
 
   // A day stays open until the end of the following day. Anything older is
@@ -603,11 +621,12 @@
 
   // ---------------------------------------------------------------- journey
   function renderJourney() {
-    var rewards = sortedRewards(), lastReset = -1;
-    S.history.forEach(function (h, i) { if (h.result === 'reset') lastReset = i; });
-    var runStart = lastReset >= 0 ? addDays(S.history[lastReset].date, 1) : (S.history.length ? S.history[0].date : S.today);
+    var rewards = sortedRewards(), first = runStartIndex();
+    var runStart = first < S.history.length ? S.history[first].date
+      : first > 0 && S.history[first - 1].result === 'reset' ? addDays(S.history[first - 1].date, 1)
+      : first > 0 && S.counterResetOn ? S.counterResetOn : S.today;
     function reachedOn(days) {
-      for (var i = lastReset + 1; i < S.history.length; i++) { var h = S.history[i]; if (h.result === 'count' && h.counterAfter === days) return h.date; }
+      for (var i = first; i < S.history.length; i++) { var h = S.history[i]; if (h.result === 'count' && h.counterAfter === days) return h.date; }
       return null;
     }
     var list = [{ name: 'Start', daysRequired: 0, start: true }].concat(rewards), nextIdx = -1;
@@ -700,7 +719,10 @@
       '<p class="lede">The app asks for your 6-digit code every time it starts. Once open, it stays open until you close the app or lock it.</p>' +
       '<button type="button" class="btn outline icon" data-a="lockNow">' + I.lock + 'Lock now</button>' +
       '<button type="button" class="btn ghost" data-a="changeCode">Change code</button></section>' +
-      '<p class="foot"><button type="button" class="link small danger" data-a="askReset">Erase all data</button></p></div>';
+      '<section class="stack danger-zone" style="gap:10px" aria-labelledby="set-danger"><h2 id="set-danger" class="h2">Danger zone</h2>' +
+      '<p class="lede">Reset sets your successful days (' + S.counter + ') and NoFap clean days (' + nd + ') back to 0. Your closed days, journal and urges stay.</p>' +
+      '<button type="button" class="btn outline danger" data-a="askResetCounters">Reset all counters…</button>' +
+      '<button type="button" class="link small danger" data-a="askReset">Erase all data</button></section></div>';
   }
 
   // ---------------------------------------------------------------- chrome
@@ -742,6 +764,12 @@
       var pl = pillOf(d);
       inner = '<span class="k">' + esc(fmtLong(d.date)) + '</span><div class="row-between"><h2 id="m-title" class="big-score">' + d.score + '/' + d.minScore + '</h2><span class="res ' + pl.c + '">' + pl.t + '</span></div>' +
         '<ul class="items">' + itemRows(d.items) + '</ul><div class="two"><button type="button" class="btn outline" data-a="dayEditFromModal" data-idx="' + m.idx + '">Edit this day</button><button type="button" class="btn dark" data-a="closeModal">Close</button></div>';
+    } else if (m.type === 'typed') {
+      inner = '<span class="k" style="color:#8F3A0C">' + esc(m.kicker) + '</span><h2 id="m-title">' + esc(m.title) + '</h2><p>' + esc(m.body) + '</p>' +
+        '<ul class="impact">' + m.impact.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
+        '<label for="typed-confirm" class="lbl strong">Type <b class="word">' + m.word + '</b> to confirm</label>' +
+        '<input id="typed-confirm" class="field" type="text" autocomplete="off" autocapitalize="characters" spellcheck="false" data-a="typedConfirm" value="">' +
+        '<div class="two"><button type="button" class="btn ghost" data-a="closeModal">Cancel</button><button type="button" class="btn danger-fill" data-a="typedYes" disabled>' + esc(m.ok) + '</button></div>';
     } else if (m.type === 'ask') {
       inner = '<span class="k" style="color:' + m.color + '">' + esc(m.kicker) + '</span><h2 id="m-title">' + esc(m.title) + '</h2><p>' + esc(m.body) + '</p>' +
         '<div class="two"><button type="button" class="btn ghost" data-a="closeModal">Cancel</button><button type="button" class="btn danger-fill" data-a="askYes">' + esc(m.ok) + '</button></div>';
@@ -1031,11 +1059,31 @@
       var key = el.getAttribute('data-key'), input = document.querySelector('[data-search="' + key + '"]');
       ui.q[key] = ''; if (input) input.value = ''; applyFilters();
     },
+    askResetCounters: function () {
+      ui.modal = { type: 'typed', kicker: 'Dangerous action', title: 'Reset all counters?', word: 'RESET', ok: 'Reset counters',
+        body: 'This starts everything from zero and cannot be undone.',
+        impact: ['Successful days: ' + S.counter + ' → 0 (your reward journey starts again)', 'NoFap clean for ' + plural(nofapDays(), 'day', 'days') + ' → 0 (clean since today)', 'Closed days, journal, urges and settings are kept'],
+        run: function () {
+          resetCounters();
+          ui.modal = { type: 'info', kicker: 'Done', title: 'Counters reset', body: 'Successful days and NoFap clean days are back to 0. Your new run starts today.', ok: 'OK', color: '#1E6A50' };
+        } };
+      render();
+      focusField('#typed-confirm');
+    },
+    typedYes: function () {
+      var input = document.getElementById('typed-confirm'), m = ui.modal;
+      if (!m || !input || input.value.trim().toUpperCase() !== m.word) return;
+      ui.modal = null;
+      m.run();
+      commit();
+    },
     askReset: function () {
-      ui.modal = { type: 'ask', kicker: 'Erase all data', title: 'Start over?', color: '#7A2F08', ok: 'Erase',
-        body: 'Tasks, rewards, days, journal, urges and NoFap settings are deleted from this phone. Your lock code stays. This cannot be undone.',
+      ui.modal = { type: 'typed', kicker: 'Dangerous action', title: 'Erase all data?', word: 'ERASE', ok: 'Erase everything',
+        body: 'Everything is deleted from this phone and cannot be undone.',
+        impact: ['Tasks, rewards and the minimum go back to the defaults', 'All closed days, journal entries and urges are deleted', 'NoFap settings and lists are deleted', 'Your lock code stays'],
         run: function () { var sec = S.security; S = defaultState(); S.security = sec; ui.histOpen = null; ui.edit = null; ui.screen = 'today'; } };
       render();
+      focusField('#typed-confirm');
     }
   };
 
@@ -1062,6 +1110,7 @@
     else if (a === 'udNote') ui.ud.note = el.value;
     else if (a === 'relDraft') { if (ui.modal) ui.modal.draft = el.value; }
     else if (a === 'uNote') { var u = findUrge(id); if (u) { u.note = el.value; save(); } }
+    else if (a === 'typedConfirm' && ui.modal) { var yes = document.querySelector('[data-a="typedYes"]'); if (yes) yes.disabled = el.value.trim().toUpperCase() !== ui.modal.word; }
   });
   document.addEventListener('focusout', function (ev) {
     var el = ev.target;

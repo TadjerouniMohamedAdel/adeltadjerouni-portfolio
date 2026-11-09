@@ -37,3 +37,6 @@ lives in memory, so every fresh start of the app asks for the code.
 - **Editing past days**: Days → open a day → "Edit this day" (check-ins and that day's minimum);
   later days are recounted. Changing the minimum in Settings applies from the open day on.
 - **Urges**: an urge saved as "relapsed" moves NoFap "clean since" to that day.
+- **Reset all counters** (Settings → Danger zone, type RESET): successful days and NoFap clean days
+  go to 0; a reset point (`counterResetAt`) keeps later edits of older days from restoring the old
+  count. Closed days, journal and urges are kept. "Erase all data" asks you to type ERASE.

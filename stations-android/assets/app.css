@@ -327,3 +327,10 @@ svg { display: block; flex-shrink: 0; }
 @keyframes fade { from { opacity: 0; } }
 @keyframes rise { from { transform: translateY(40px); opacity: 0; } }
 @keyframes slide { from { transform: translateX(-30px); opacity: 0; } }
+
+/* Danger zone */
+.danger-zone { padding: 16px; border: 1.5px solid #E4C2AC; border-radius: 20px; background: #FBF1EA; }
+.danger-zone .h2 { color: var(--danger); }
+.danger-zone .link { align-self: center; }
+.impact { margin: 0; padding: 0 0 0 18px; display: flex; flex-direction: column; gap: 4px; font-size: 14px; line-height: 1.4; color: var(--body); }
+.word { font-family: var(--display); letter-spacing: .08em; color: var(--danger); }
