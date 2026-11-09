@@ -185,7 +185,7 @@
   var ui = {
     locked: true, pin: '', pinErr: false, pinMode: 'unlock', pinFirst: '',
     screen: 'today', drawer: false, modal: null,
-    calMonth: null, histLimit: PAGE, histOpen: null, edit: null,
+    graphYears: 1, graphScroll: null, histLimit: PAGE, histOpen: null, edit: null,
     journalDraft: '', jView: 'list', jId: null, jText: '', jConfirmDelete: false,
     ud: freshUrge(), urgeOpen: null, urgeConfirmDelete: null, actionOpen: null,
     q: { goals: '', rewards: '' }, nfNew: null
@@ -409,39 +409,53 @@
     return { cls: 'hold', t: plural(min - ev.score, 'point', 'points') + ' to the minimum', b: 'Below it nothing happens — the counter stays at ' + S.counter + '.', ct: 'No change', cb: 'Below the minimum. Counter stays at ' + S.counter + '.' };
   }
 
-  function renderCalendar() {
+  // GitHub-style grid: one column per week (Mon → Sun), at least a year,
+  // scrollable sideways, every past day tappable.
+  var CELL_WORDS = { count: 'counted', hold: 'no change', reset: 'relapsed' };
+  function countLevel(h) {
+    var r = h.score / Math.max(1, h.total);
+    return r >= 1 ? 4 : r >= 0.85 ? 3 : r >= 0.7 ? 2 : 1;
+  }
+  function graphRange() {
     var real = localToday();
-    var month = ui.calMonth || real.slice(0, 7);
-    var cm = month.split('-').map(Number);
-    var firstDow = (new Date(Date.UTC(cm[0], cm[1] - 1, 1)).getUTCDay() + 6) % 7;
-    var dim = new Date(Date.UTC(cm[0], cm[1], 0)).getUTCDate();
-    var prefix = month + '-', byDate = {}, n = { count: 0, hold: 0, reset: 0 };
-    // Only this month's days are looked at.
-    S.history.forEach(function (h, i) { if (h.date.slice(0, 8) === prefix) byDate[h.date] = i; });
-    var cells = '';
-    for (var b = 0; b < firstDow; b++) cells += '<span></span>';
-    var words = { count: 'counted', hold: 'no change', reset: 'relapsed' };
-    for (var d = 1; d <= dim; d++) {
-      var iso = prefix + pad(d), idx = byDate[iso];
+    var from = addDays(real, -364 * ui.graphYears);
+    if (S.history.length && S.history[0].date < from) from = S.history[0].date;
+    var p = from.split('-').map(Number), dow = (new Date(Date.UTC(p[0], p[1] - 1, p[2])).getUTCDay() + 6) % 7;
+    return { from: addDays(from, -dow), to: real };
+  }
+  function renderGraph() {
+    var real = localToday(), range = graphRange(), byDate = {};
+    S.history.forEach(function (h, i) { byDate[h.date] = i; });
+    var cells = '', months = '', weeks = 0, n = { count: 0, hold: 0, reset: 0 }, yearAgo = addDays(real, -364);
+    for (var d = range.from, dow = 0; d <= real; d = addDays(d, 1), dow = (dow + 1) % 7) {
+      var p = parts(d);
+      if (dow === 0) {
+        weeks++;
+        // Month label above the first week that contains the 1st of a month.
+        if (p.day <= 7) months += '<span style="grid-column:' + weeks + '">' + p.mon + (p.mon === 'Jan' ? ' ' + p.year : '') + '</span>';
+      }
+      var idx = byDate[d], label = fmtLong(d), cls, act = '';
       if (idx != null) {
         var h = S.history[idx];
-        n[h.result]++;
-        cells += '<button type="button" class="cal-d ' + h.result + (iso === real ? ' is-today' : '') + '" data-a="calDay" data-idx="' + idx + '" aria-label="' + d + ' ' + MF[cm[1] - 1] + ': ' + h.score + '/' + h.minScore + ', ' + words[h.result] + '">' + d + '</button>';
-      } else {
-        var cls = iso === real ? 'today' : iso > real ? 'future' : 'nodata';
-        cells += '<button type="button" class="cal-d ' + cls + '" disabled aria-label="' + d + ' ' + MF[cm[1] - 1] + (cls === 'today' ? ': today' : cls === 'nodata' ? ': no data' : '') + '">' + d + '</button>';
-      }
+        if (d >= yearAgo) n[h.result]++;
+        cls = h.result === 'count' ? 'g-count l' + countLevel(h) : 'g-' + h.result;
+        label += ': ' + h.score + '/' + h.minScore + ', ' + CELL_WORDS[h.result];
+        act = ' data-a="gDay" data-date="' + d + '"';
+      } else if (d >= S.today) { cls = 'g-open'; label += ': open — tick your tasks above'; act = ' data-a="gOpen"'; }
+      else { cls = 'g-none'; label += ': no record — tap to add'; act = ' data-a="gDay" data-date="' + d + '"'; }
+      if (d === real) cls += ' g-today';
+      cells += '<button type="button" class="g ' + cls + '"' + act + ' aria-label="' + label + '"></button>';
     }
-    var nextDisabled = month >= real.slice(0, 7);
-    return '<section class="card cal" aria-labelledby="cal-h"><div class="row-between">' +
-      '<button type="button" class="sq-soft" aria-label="Previous month" data-a="calPrev">' + I.left + '</button>' +
-      '<h2 id="cal-h" class="h3">' + MF[cm[1] - 1] + ' ' + cm[0] + '</h2>' +
-      '<button type="button" class="sq-soft" aria-label="Next month" data-a="calNext"' + (nextDisabled ? ' disabled' : '') + '>' + I.right + '</button></div>' +
-      '<div class="cal-grid cal-head"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>' +
-      '<div class="cal-grid">' + cells + '</div>' +
-      '<div class="legend"><span><i class="lg-count"></i>Counted · ' + n.count + '</span><span><i class="lg-hold"></i>No change · ' + n.hold + '</span><span><i class="lg-reset"></i>Relapsed · ' + n.reset + '</span></div>' +
-      (S.history.length ? '' : '<p class="muted small">Fresh start. Each day you close gets its color here. Tap an orange day to read why you relapsed.</p>') +
-      '</section>';
+    return '<section class="card graph-card" aria-labelledby="graph-h"><div class="row-between" style="align-items:baseline">' +
+      '<h2 id="graph-h" class="h3">' + plural(n.count, 'successful day', 'successful days') + ' in the last year</h2></div>' +
+      '<div class="graph"><div class="g-days"><span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span></div>' +
+      '<div class="graph-scroll" data-graph-scroll>' +
+      '<button type="button" class="g-older" data-a="gOlder">' + I.left + 'Older</button>' +
+      '<div class="graph-body"><div class="g-months" style="grid-template-columns:repeat(' + weeks + ',var(--gc))">' + months + '</div>' +
+      '<div class="g-grid" style="grid-template-columns:repeat(' + weeks + ',var(--gc))">' + cells + '</div></div></div></div>' +
+      '<div class="g-legend"><span class="g-key">Less<i class="g g-count l1"></i><i class="g g-count l2"></i><i class="g g-count l3"></i><i class="g g-count l4"></i>More</span>' +
+      '<span class="g-key"><i class="g g-hold"></i>No change · ' + n.hold + '<i class="g g-reset"></i>Relapsed · ' + n.reset + '<i class="g g-none"></i>No record</span></div>' +
+      '<p class="muted small">Tap any day to see it and update it. Empty days can be added.</p></section>';
   }
 
   function renderToday() {
@@ -479,7 +493,7 @@
       '<div class="stack">' + (goals || '<div class="empty">No tasks yet. Add them in Settings.</div>') + '</div>' +
       '<button type="button" class="big-btn" data-a="askClose"' + (future || !S.goals.length ? ' disabled' : '') + '>Close ' + fmt(S.today) + '…</button>' +
       (future ? '<p class="hint">You can tick tasks ahead, but ' + fmt(S.today) + ' can only be closed once it begins.</p>' : '') +
-      renderCalendar() +
+      renderGraph() +
       '<section class="card" aria-labelledby="diary-h"><div class="row-between"><h2 id="diary-h" class="h2">Journal</h2><button type="button" class="link" data-a="go" data-to="journal">All entries</button></div>' +
       '<label for="diary-today" class="lbl">Write about today</label>' +
       '<textarea id="diary-today" class="area" rows="5" placeholder="How did today go? What did you learn?" data-a="journalDraft">' + esc(ui.journalDraft) + '</textarea>' +
@@ -764,6 +778,22 @@
       var pl = pillOf(d);
       inner = '<span class="k">' + esc(fmtLong(d.date)) + '</span><div class="row-between"><h2 id="m-title" class="big-score">' + d.score + '/' + d.minScore + '</h2><span class="res ' + pl.c + '">' + pl.t + '</span></div>' +
         '<ul class="items">' + itemRows(d.items) + '</ul><div class="two"><button type="button" class="btn outline" data-a="dayEditFromModal" data-idx="' + m.idx + '">Edit this day</button><button type="button" class="btn dark" data-a="closeModal">Close</button></div>';
+    } else if (m.type === 'dayEdit') {
+      var items = m.items.map(function (it, i) { return Object.assign({}, it, { done: m.done[i] }); });
+      var o = dayOutcome(items, m.min), rl = o.result === 'count' ? 'Counts' : o.result === 'reset' ? 'Relapse' : 'No change';
+      inner = '<span class="k">' + esc(fmtLong(m.date)) + (m.isNew ? ' · no record yet' : '') + '</span>' +
+        '<div class="row-between"><h2 id="m-title" class="big-score">' + o.score + '/' + m.min + '</h2><span class="res ' + o.result + '">' + rl + '</span></div>' +
+        (m.isNew ? '<p>Tick what you did that day and save to add it. Your counter is recalculated.</p>' : '') +
+        (items.length ? '<ul class="items">' + items.map(function (it, i) {
+          return '<li class="' + (it.done ? 'done' : 'missed') + (it.nonNegotiable ? ' must' : '') + ' editable" role="button" tabindex="0" aria-pressed="' + it.done + '" data-a="mdItem" data-i="' + i + '">' +
+            '<span class="ic">' + (it.done ? I.checkSm : I.xSm) + '</span><span class="nm">' + esc(it.goalName) + '</span>' + (it.nonNegotiable ? '<span class="mustlbl">Must</span>' : '') +
+            '<span class="pt">' + (it.done ? '+' + it.points : '0') + '</span></li>';
+        }).join('') + '</ul>' : '<p>No tasks were set for this day.</p>') +
+        '<div class="row-between"><div class="col"><span class="edit-lbl">Minimum for this day</span><span class="day-sub">Other days keep their own</span></div>' +
+        '<div class="stepper"><button type="button" class="sq light" aria-label="Lower this day\'s minimum" data-a="mdMin" data-v="-1"' + (m.min <= 1 ? ' disabled' : '') + '>' + I.minus + '</button>' +
+        '<span class="pts-val">' + m.min + '</span><button type="button" class="sq light" aria-label="Raise this day\'s minimum" data-a="mdMin" data-v="1"' + (m.min >= Math.max(1, o.total) ? ' disabled' : '') + '>' + I.plus + '</button></div></div>' +
+        (o.result === 'reset' ? '<label for="md-reason" class="lbl strong">Relapse reason</label><textarea id="md-reason" class="area" rows="3" placeholder="What happened?" data-a="mdReason">' + esc(m.reason) + '</textarea>' : '') +
+        '<div class="two"><button type="button" class="btn ghost" data-a="closeModal">Cancel</button><button type="button" class="btn dark" data-a="mdSave">' + (m.isNew ? 'Add day' : 'Save day') + '</button></div>';
     } else if (m.type === 'typed') {
       inner = '<span class="k" style="color:#8F3A0C">' + esc(m.kicker) + '</span><h2 id="m-title">' + esc(m.title) + '</h2><p>' + esc(m.body) + '</p>' +
         '<ul class="impact">' + m.impact.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul>' +
@@ -787,6 +817,8 @@
     purgeBlankNofap();
     var main = document.getElementById('main');
     var keep = main && lastScreen === ui.screen + ui.jView && !lastLocked ? main.scrollTop : 0;
+    var gs = document.querySelector('[data-graph-scroll]');
+    if (gs && ui.graphScroll !== 0) ui.graphScroll = gs.scrollLeft;
     if (ui.locked) {
       root.innerHTML = renderLock();
     } else {
@@ -802,6 +834,9 @@
       var tas = main.querySelectorAll('textarea.nf-text');
       for (var t = 0; t < tas.length; t++) autosize(tas[t]);
       main.scrollTop = keep;
+      gs = document.querySelector('[data-graph-scroll]');
+      if (gs) gs.scrollLeft = ui.graphScroll == null ? gs.scrollWidth : ui.graphScroll;
+      if (ui.graphScroll === 0) ui.graphScroll = undefined; // "Older" jumps left once, then keeps position
     }
     lastScreen = ui.screen + ui.jView;
     lastLocked = ui.locked;
@@ -905,16 +940,47 @@
     toggle: function (el) { var id = el.getAttribute('data-id'); if (S.doneToday[id]) delete S.doneToday[id]; else S.doneToday[id] = true; commit(); },
     askClose: function () { if (S.today <= localToday()) { ui.modal = { type: 'confirm' }; render(); } },
     closeDay: doCloseDay,
-    calPrev: function () {
-      var q = (ui.calMonth || localToday().slice(0, 7)).split('-').map(Number), d = new Date(Date.UTC(q[0], q[1] - 2, 1));
-      ui.calMonth = d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1); render();
+    gDay: function (el) {
+      var date = el.getAttribute('data-date'), idx = -1;
+      S.history.forEach(function (h, i) { if (h.date === date) idx = i; });
+      if (idx >= 0) {
+        var h = S.history[idx];
+        ui.modal = { type: 'dayEdit', date: date, idx: idx, isNew: false, items: h.items, done: h.items.map(function (it) { return !!it.done; }), min: h.minScore, reason: h.relapseReason || '' };
+      } else {
+        var items = S.goals.map(function (g) { return { goalName: g.name, points: g.points, nonNegotiable: g.nonNegotiable, done: false }; });
+        ui.modal = { type: 'dayEdit', date: date, idx: -1, isNew: true, items: items, done: items.map(function () { return false; }), min: S.settings.minScore, reason: '' };
+      }
+      render();
     },
-    calNext: function () {
-      var q = (ui.calMonth || localToday().slice(0, 7)).split('-').map(Number), d = new Date(Date.UTC(q[0], q[1], 1));
-      var nm = d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1);
-      if (nm <= localToday().slice(0, 7)) { ui.calMonth = nm; render(); }
+    gOpen: function () { var t = document.querySelector('.goal'); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'center' }); },
+    gOlder: function () { ui.graphYears++; ui.graphScroll = 0; render(); },
+    mdItem: function (el) { var i = Number(el.getAttribute('data-i')); ui.modal.done[i] = !ui.modal.done[i]; render(); },
+    mdMin: function (el) {
+      var m = ui.modal, t = m.items.reduce(function (a, it) { return a + it.points; }, 0);
+      m.min = Math.max(1, Math.min(Math.max(1, t), m.min + Number(el.getAttribute('data-v')))); render();
     },
-    calDay: function (el) { openDayIdx(Number(el.getAttribute('data-idx'))); },
+    mdSave: function () {
+      var m = ui.modal, before = S.counter, h;
+      if (m.isNew) {
+        h = { date: m.date, items: m.items.map(function (it, i) { return Object.assign({}, it, { done: m.done[i] }); }), score: 0, minScore: m.min, total: 0, result: 'hold', counterAfter: 0, relapseReason: '', added: true };
+        S.history.push(h);
+        S.history.sort(function (a, b) { return a.date < b.date ? -1 : a.date > b.date ? 1 : 0; });
+        // Keep a manual counter reset pointing at the same day after inserting earlier days.
+        if (S.counterResetAt != null && S.history.indexOf(h) < S.counterResetAt) S.counterResetAt++;
+      } else {
+        h = S.history[m.idx];
+        h.items.forEach(function (it, i) { it.done = m.done[i]; });
+        h.minScore = m.min; h.edited = true;
+      }
+      replayHistory();
+      h.relapseReason = h.result === 'reset' ? (m.reason || '').trim() : h.relapseReason;
+      ui.histOpen = null; ui.edit = null;
+      var name = { count: 'counted', hold: 'no change', reset: 'relapse' };
+      ui.modal = { type: 'info', kicker: (m.isNew ? 'Day added · ' : 'Day updated · ') + fmt(h.date), color: '#1E6A50', ok: 'Done',
+        title: before === S.counter ? 'Still at ' + plural(S.counter, 'day', 'days') : plural(before, 'day', 'days') + ' → ' + S.counter,
+        body: 'This day is ' + h.score + '/' + h.minScore + ' (' + name[h.result] + '). Every later day was recounted with its own minimum.' };
+      commit();
+    },
     saveDraft: function () {
       var t = ui.journalDraft.trim();
       if (!t) return;
@@ -1109,6 +1175,7 @@
     else if (a === 'jText') ui.jText = el.value;
     else if (a === 'udNote') ui.ud.note = el.value;
     else if (a === 'relDraft') { if (ui.modal) ui.modal.draft = el.value; }
+    else if (a === 'mdReason') { if (ui.modal) ui.modal.reason = el.value; }
     else if (a === 'uNote') { var u = findUrge(id); if (u) { u.note = el.value; save(); } }
     else if (a === 'typedConfirm' && ui.modal) { var yes = document.querySelector('[data-a="typedYes"]'); if (yes) yes.disabled = el.value.trim().toUpperCase() !== ui.modal.word; }
   });
@@ -1148,7 +1215,7 @@
     }
     if (ev.key === 'Enter' && t.tagName === 'INPUT') t.blur();
     if (ev.key === 'Enter' && t.getAttribute && t.getAttribute('data-a') === 'nfEdit') { ev.preventDefault(); t.blur(); }
-    if ((ev.key === 'Enter' || ev.key === ' ') && t.getAttribute && t.getAttribute('data-a') === 'editItem') { ev.preventDefault(); t.click(); }
+    if ((ev.key === 'Enter' || ev.key === ' ') && t.getAttribute && /^(editItem|mdItem)$/.test(t.getAttribute('data-a'))) { ev.preventDefault(); t.click(); }
   });
 
   // Called by the Android shell for the system back gesture. Returns true when handled.

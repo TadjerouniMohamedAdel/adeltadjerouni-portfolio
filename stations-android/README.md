@@ -36,6 +36,9 @@ lives in memory, so every fresh start of the app asks for the code.
   automatically with whatever was ticked.
 - **Editing past days**: Days → open a day → "Edit this day" (check-ins and that day's minimum);
   later days are recounted. Changing the minimum in Settings applies from the open day on.
+- **Year grid** (Today): GitHub-style, one column per week, at least a year, scrolls sideways
+  ("Older" adds a year). Tap any past day to edit it; days without a record can be added and
+  are inserted in date order before the counter is recalculated.
 - **Urges**: an urge saved as "relapsed" moves NoFap "clean since" to that day.
 - **Reset all counters** (Settings → Danger zone, type RESET): successful days and NoFap clean days
   go to 0; a reset point (`counterResetAt`) keeps later edits of older days from restoring the old
