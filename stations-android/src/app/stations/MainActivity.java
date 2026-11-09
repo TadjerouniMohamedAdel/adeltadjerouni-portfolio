@@ -122,6 +122,15 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public String version() {
+            try {
+                return activity.getPackageManager().getPackageInfo(activity.getPackageName(), 0).versionName;
+            } catch (Exception e) {
+                return "?";
+            }
+        }
+
+        @JavascriptInterface
         public String load() {
             return prefs.getString(KEY, null);
         }

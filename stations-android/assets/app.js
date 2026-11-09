@@ -483,6 +483,7 @@
       '<section class="hero" aria-label="Progress"><div class="hero-top"><div class="col" style="gap:4px"><span class="hero-label">Successful days</span><span class="hero-count">' + S.counter + '</span></div>' +
       '<div class="hero-next"><span class="hero-label">Next reward</span><span class="hero-next-name">' + esc(next ? next.name : 'All reached') + '</span><span class="hero-next-away">' + esc(nextAway) + '</span></div></div>' +
       '<div class="bar"><div style="width:' + nextPct + '%"></div></div></section>' +
+      renderGraph() +
       '<section class="score ' + st.cls + '" aria-label="Today\'s score"><div class="ring"><svg width="84" height="84" viewBox="0 0 92 92" aria-hidden="true">' +
       '<circle cx="46" cy="46" r="38" fill="none" stroke="#FFFDF8" stroke-width="9"/>' +
       (pct > 0 ? '<circle class="prog" cx="46" cy="46" r="38" fill="none" stroke="' + (ev.score >= min ? '#1E6A50' : '#1D211C') + '" stroke-width="9" stroke-linecap="round" stroke-dasharray="' + (pct * C).toFixed(2) + ' ' + C + '" transform="rotate(-90 46 46)"/>' : '') +
@@ -493,7 +494,6 @@
       '<div class="stack">' + (goals || '<div class="empty">No tasks yet. Add them in Settings.</div>') + '</div>' +
       '<button type="button" class="big-btn" data-a="askClose"' + (future || !S.goals.length ? ' disabled' : '') + '>Close ' + fmt(S.today) + '…</button>' +
       (future ? '<p class="hint">You can tick tasks ahead, but ' + fmt(S.today) + ' can only be closed once it begins.</p>' : '') +
-      renderGraph() +
       '<section class="card" aria-labelledby="diary-h"><div class="row-between"><h2 id="diary-h" class="h2">Journal</h2><button type="button" class="link" data-a="go" data-to="journal">All entries</button></div>' +
       '<label for="diary-today" class="lbl">Write about today</label>' +
       '<textarea id="diary-today" class="area" rows="5" placeholder="How did today go? What did you learn?" data-a="journalDraft">' + esc(ui.journalDraft) + '</textarea>' +
@@ -627,7 +627,7 @@
         '<span class="day-sub">' + p.mon + (p.year !== parts(localToday()).year ? ' ' + p.year : '') + ' · ' + doneN + ' of ' + h.items.length + ' tasks' + (h.edited ? '<span class="edited-tag">Edited</span>' : '') + '</span></span>' +
         '<span class="res ' + pill.c + '">' + pill.t + '</span>' + I.chev + '</button>' + body + '</div>';
     }
-    return '<div class="screen"><div class="stats four"><div class="stat"><b>' + n + '</b><span>days</span></div><div class="stat count"><b>' + cnt('count') + '</b><span>counted</span></div>' +
+    return '<div class="screen">' + renderGraph() + '<div class="stats four"><div class="stat"><b>' + n + '</b><span>days</span></div><div class="stat count"><b>' + cnt('count') + '</b><span>counted</span></div>' +
       '<div class="stat hold"><b>' + cnt('hold') + '</b><span>no change</span></div><div class="stat reset"><b>' + cnt('reset') + '</b><span>relapsed</span></div></div>' +
       (rows || '<p class="muted">No days closed yet. Close your first day on the Today page.</p>') +
       (n > shown ? '<button type="button" class="dashed" data-a="histMore">Show 30 more days · ' + (n - shown) + ' left</button>' : '') + '</div>';
@@ -742,13 +742,19 @@
   // ---------------------------------------------------------------- chrome
   var TITLES = { today: 'Today', journal: 'Journal', urge: 'Urge hit', urges: 'Urges log', days: 'Days', journey: 'Journey', settings: 'Settings' };
 
+  function appVersion() {
+    try { if (window.StationsStore && window.StationsStore.version) return window.StationsStore.version(); } catch (e) { }
+    return 'web preview';
+  }
+
   function renderDrawer() {
     if (!ui.drawer) return '';
     var items = [['today', 'Today', I.nToday], ['journal', 'Journal', I.nJournal], ['urges', 'Urges log', I.nUrges], ['days', 'Days', I.nDays], ['journey', 'Journey', I.nJourney], ['settings', 'Settings', I.nSettings]];
     return '<div class="drawer-wrap"><button type="button" class="drawer-scrim" aria-label="Close menu" data-a="closeDrawer"></button><nav class="drawer" aria-label="Pages">' +
       '<div class="drawer-h"><span class="drawer-t">Improvement</span><span class="sub">' + plural(S.counter, 'successful day', 'successful days') + ' · clean for ' + plural(nofapDays(), 'day', 'days') + '</span></div>' +
       items.map(function (it) { return '<button type="button" class="nav-i" data-a="go" data-to="' + it[0] + '"' + (ui.screen === it[0] ? ' aria-current="page"' : '') + '>' + it[2] + it[1] + '</button>'; }).join('') +
-      '<span class="grow"></span><button type="button" class="nav-i lock-i" data-a="lockNow">' + I.lock + 'Lock app</button></nav></div>';
+      '<span class="grow"></span><button type="button" class="nav-i lock-i" data-a="lockNow">' + I.lock + 'Lock app</button>' +
+      '<span class="app-ver">Version ' + esc(appVersion()) + '</span></nav></div>';
   }
 
   function renderModal() {
