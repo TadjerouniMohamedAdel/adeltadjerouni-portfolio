@@ -441,7 +441,7 @@
         cls = h.result === 'count' ? 'g-count l' + countLevel(h) : 'g-' + h.result;
         label += ': ' + h.score + '/' + h.minScore + ', ' + CELL_WORDS[h.result];
         act = ' data-a="gDay" data-date="' + d + '"';
-      } else if (d >= S.today) { cls = 'g-open'; label += ': open — tick your tasks above'; act = ' data-a="gOpen"'; }
+      } else if (d >= S.today) { cls = 'g-open'; label += ': open — tap to tick your tasks on Today'; act = ' data-a="gOpen"'; }
       else { cls = 'g-none'; label += ': no record — tap to add'; act = ' data-a="gDay" data-date="' + d + '"'; }
       if (d === real) cls += ' g-today';
       cells += '<button type="button" class="g ' + cls + '"' + act + ' aria-label="' + label + '"></button>';
@@ -483,7 +483,6 @@
       '<section class="hero" aria-label="Progress"><div class="hero-top"><div class="col" style="gap:4px"><span class="hero-label">Successful days</span><span class="hero-count">' + S.counter + '</span></div>' +
       '<div class="hero-next"><span class="hero-label">Next reward</span><span class="hero-next-name">' + esc(next ? next.name : 'All reached') + '</span><span class="hero-next-away">' + esc(nextAway) + '</span></div></div>' +
       '<div class="bar"><div style="width:' + nextPct + '%"></div></div></section>' +
-      renderGraph() +
       '<section class="score ' + st.cls + '" aria-label="Today\'s score"><div class="ring"><svg width="84" height="84" viewBox="0 0 92 92" aria-hidden="true">' +
       '<circle cx="46" cy="46" r="38" fill="none" stroke="#FFFDF8" stroke-width="9"/>' +
       (pct > 0 ? '<circle class="prog" cx="46" cy="46" r="38" fill="none" stroke="' + (ev.score >= min ? '#1E6A50' : '#1D211C') + '" stroke-width="9" stroke-linecap="round" stroke-dasharray="' + (pct * C).toFixed(2) + ' ' + C + '" transform="rotate(-90 46 46)"/>' : '') +
@@ -958,7 +957,7 @@
       }
       render();
     },
-    gOpen: function () { var t = document.querySelector('.goal'); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'center' }); },
+    gOpen: function () { go('today'); var t = document.querySelector('.goal'); if (t) t.scrollIntoView({ block: 'center' }); },
     gOlder: function () { ui.graphYears++; ui.graphScroll = 0; render(); },
     mdItem: function (el) { var i = Number(el.getAttribute('data-i')); ui.modal.done[i] = !ui.modal.done[i]; render(); },
     mdMin: function (el) {
