@@ -1,45 +1,108 @@
 /* eslint-disable */
-// Stations — daily goals. Plain JS, rendered into #main / #nav / #overlay.
-// Persistence: the Android shell exposes `StationsStore` (SharedPreferences);
-// in a desktop browser we fall back to localStorage.
+// Improvement — daily tasks, NoFap tracking, journal and urge log.
+// Plain JS rendered into #app. Persistence: the Android shell exposes
+// `StationsStore` (SharedPreferences); in a desktop browser we fall back to
+// localStorage. The storage key and document shape are kept from Stations
+// 1.x — new data lives in new keys next to the old ones.
 (function () {
   'use strict';
 
   var STORE_KEY = 'stations.state.v1';
   var MAX_CATCH_UP = 400;
-  var GRID_DAYS = 90;
+  var PAGE = 30;
   var NOFAP_LISTS = [
     { key: 'immediate', title: 'Immediate action list', hint: 'What to do the moment an urge hits.', add: 'Add action' },
     { key: 'offensive', title: 'Offensive tactics', hint: 'Habits that build you up and keep you busy.', add: 'Add tactic' },
     { key: 'defensive', title: 'Defensive tactics', hint: 'Barriers that keep triggers away.', add: 'Add tactic' }
   ];
+  var TRIGGERS = ['Boredom', 'Stress', 'Loneliness', 'Tired', 'Phone / social media', 'Late night', 'Alone at home'];
+  var MOODS = ['Anxious', 'Sad', 'Bored', 'Angry', 'Restless', 'Low energy'];
+  // Initial lock code, stored only as salted SHA-256. Change it in Settings → Security.
+  var DEFAULT_SECURITY = { salt: '12fc89437d92ec05355c882c54ae1a76', hash: 'edbf324b94313614520589ef9a1d9adef83edf346841fdcb29176897d834b541' };
+
+  // ---------------------------------------------------------------- sha256
+  function sha256(ascii) {
+    function rr(v, a) { return (v >>> a) | (v << (32 - a)); }
+    var maxWord = Math.pow(2, 32), i, j, result = '', words = [], bitLen = ascii.length * 8;
+    var hash = [], k = [], n = 0, composite = {};
+    for (var c = 2; n < 64; c++) {
+      if (!composite[c]) {
+        for (i = 0; i < 313; i += c) composite[i] = c;
+        hash[n] = (Math.pow(c, 0.5) * maxWord) | 0;
+        k[n++] = (Math.pow(c, 1 / 3) * maxWord) | 0;
+      }
+    }
+    ascii += '\x80';
+    while (ascii.length % 64 - 56) ascii += '\x00';
+    for (i = 0; i < ascii.length; i++) {
+      j = ascii.charCodeAt(i);
+      if (j >> 8) return '';
+      words[i >> 2] |= j << ((3 - i) % 4) * 8;
+    }
+    words[words.length] = (bitLen / maxWord) | 0;
+    words[words.length] = bitLen;
+    for (j = 0; j < words.length;) {
+      var w = words.slice(j, j += 16), old = hash;
+      hash = hash.slice(0, 8);
+      for (i = 0; i < 64; i++) {
+        var w15 = w[i - 15], w2 = w[i - 2], a = hash[0], e = hash[4];
+        var t1 = hash[7] + (rr(e, 6) ^ rr(e, 11) ^ rr(e, 25)) + ((e & hash[5]) ^ ((~e) & hash[6])) + k[i] +
+          (w[i] = (i < 16) ? w[i] : (w[i - 16] + (rr(w15, 7) ^ rr(w15, 18) ^ (w15 >>> 3)) + w[i - 7] + (rr(w2, 17) ^ rr(w2, 19) ^ (w2 >>> 10))) | 0);
+        var t2 = (rr(a, 2) ^ rr(a, 13) ^ rr(a, 22)) + ((a & hash[1]) ^ (a & hash[2]) ^ (hash[1] & hash[2]));
+        hash = [(t1 + t2) | 0].concat(hash);
+        hash[4] = (hash[4] + t1) | 0;
+      }
+      for (i = 0; i < 8; i++) hash[i] = (hash[i] + old[i]) | 0;
+    }
+    for (i = 0; i < 8; i++) for (j = 3; j + 1; j--) { var b = (hash[i] >> (j * 8)) & 255; result += (b < 16 ? '0' : '') + b.toString(16); }
+    return result;
+  }
+  function randomHex(bytes) {
+    var a = new Uint8Array(bytes), s = '';
+    try { window.crypto.getRandomValues(a); } catch (e) { for (var i = 0; i < bytes; i++) a[i] = Math.floor(Math.random() * 256); }
+    for (var j = 0; j < a.length; j++) s += (a[j] < 16 ? '0' : '') + a[j].toString(16);
+    return s;
+  }
 
   // ---------------------------------------------------------------- dates
   function pad(n) { return (n < 10 ? '0' : '') + n; }
-  function localToday() {
-    var d = new Date();
-    return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate());
-  }
-  function addDays(iso, n) {
-    var p = iso.split('-').map(Number);
-    return new Date(Date.UTC(p[0], p[1] - 1, p[2] + n)).toISOString().slice(0, 10);
+  function localToday() { var d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); }
+  function nowTime() { var d = new Date(); return pad(d.getHours()) + ':' + pad(d.getMinutes()); }
+  function addDays(iso, n) { var p = iso.split('-').map(Number); return new Date(Date.UTC(p[0], p[1] - 1, p[2] + n)).toISOString().slice(0, 10); }
+  function daysBetween(a, b) {
+    var pa = a.split('-').map(Number), pb = b.split('-').map(Number);
+    return Math.round((Date.UTC(pb[0], pb[1] - 1, pb[2]) - Date.UTC(pa[0], pa[1] - 1, pa[2])) / 86400000);
   }
   var W = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
   var WL = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
   var M = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  var MF = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December'];
   function parts(iso) {
-    var p = iso.split('-').map(Number);
-    var d = new Date(Date.UTC(p[0], p[1] - 1, p[2]));
-    return { wd: W[d.getUTCDay()], wdl: WL[d.getUTCDay()], day: d.getUTCDate(), mon: M[d.getUTCMonth()] };
+    var p = iso.split('-').map(Number), d = new Date(Date.UTC(p[0], p[1] - 1, p[2]));
+    return { wd: W[d.getUTCDay()], wdl: WL[d.getUTCDay()], day: d.getUTCDate(), mon: M[d.getUTCMonth()], year: p[0] };
   }
   function fmt(iso) { var x = parts(iso); return x.wd + ' ' + x.day + ' ' + x.mon; }
+  function fmtLong(iso) { var x = parts(iso); return x.wdl + ' ' + x.day + ' ' + x.mon + ' ' + x.year; }
 
   // ---------------------------------------------------------------- state
   function uid(prefix) { return prefix + Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
+  function defaultActions() {
+    return [
+      { id: 'a1', name: 'Cold shower', tags: ['Restless', 'Stress', 'Boredom', 'Late night'] },
+      { id: 'a2', name: '20 push-ups', tags: ['Restless', 'Angry', 'Boredom', 'Bored'] },
+      { id: 'a3', name: 'Walk outside for 15 min', tags: ['Alone at home', 'Anxious', 'Sad', 'Boredom', 'Bored'] },
+      { id: 'a4', name: 'Call or text a friend', tags: ['Loneliness', 'Sad', 'Alone at home'] },
+      { id: 'a5', name: 'Put the phone in another room', tags: ['Phone / social media', 'Late night'] },
+      { id: 'a6', name: 'Go to sleep now', tags: ['Tired', 'Late night', 'Low energy'] },
+      { id: 'a7', name: 'Write it out in the journal', tags: ['Anxious', 'Sad', 'Angry', 'Stress'] },
+      { id: 'a8', name: '5 minutes of slow breathing', tags: ['Anxious', 'Stress', 'Angry', 'Restless'] }
+    ];
+  }
+
   function defaultState() {
     return {
-      version: 1,
+      version: 2,
       goals: [
         { id: 'g1', name: 'Wake up by 6:30', points: 3, nonNegotiable: false },
         { id: 'g2', name: 'Workout 30 min', points: 5, nonNegotiable: true },
@@ -61,27 +124,50 @@
       today: localToday(),
       doneToday: {},
       history: [],
-      nofap: { immediate: [], offensive: [], defensive: [] }
+      nofap: { immediate: [], offensive: [], defensive: [] },
+      historyResetV2: true,
+      journal: [],
+      urges: [],
+      actions: defaultActions(),
+      nofapSince: localToday(),
+      security: { salt: DEFAULT_SECURITY.salt, hash: DEFAULT_SECURITY.hash }
     };
+  }
+
+  // Brings any saved document up to date. Old keys are kept as they are.
+  function migrate(s) {
+    s.goals = s.goals || [];
+    s.rewards = s.rewards || [];
+    s.settings = s.settings || { minScore: 1 };
+    s.doneToday = s.doneToday || {};
+    s.counter = s.counter || 0;
+    s.today = s.today || localToday();
+    s.history = Array.isArray(s.history) ? s.history : [];
+    s.nofap = s.nofap || {};
+    NOFAP_LISTS.forEach(function (l) { if (!Array.isArray(s.nofap[l.key])) s.nofap[l.key] = []; });
+    // One-time reset of the day history for Improvement 2.0 (never runs again).
+    if (!s.historyResetV2) {
+      s.history = [];
+      s.counter = 0;
+      s.historyResetV2 = true;
+    }
+    if (!Array.isArray(s.journal)) s.journal = [];
+    if (!Array.isArray(s.urges)) s.urges = [];
+    if (!Array.isArray(s.actions)) s.actions = defaultActions();
+    if (!s.nofapSince) s.nofapSince = localToday();
+    if (!s.security || !s.security.hash) s.security = { salt: DEFAULT_SECURITY.salt, hash: DEFAULT_SECURITY.hash };
+    s.version = 2;
+    return s;
   }
 
   function load() {
     var raw = null;
-    try {
-      raw = window.StationsStore ? window.StationsStore.load() : window.localStorage.getItem(STORE_KEY);
-    } catch (e) { raw = null; }
+    try { raw = window.StationsStore ? window.StationsStore.load() : window.localStorage.getItem(STORE_KEY); } catch (e) { raw = null; }
     if (!raw) return defaultState();
     try {
       var s = JSON.parse(raw);
-      if (!s || !Array.isArray(s.goals) || !Array.isArray(s.history)) return defaultState();
-      s.rewards = s.rewards || [];
-      s.settings = s.settings || { minScore: 1 };
-      s.doneToday = s.doneToday || {};
-      s.counter = s.counter || 0;
-      s.nofap = s.nofap || {};
-      NOFAP_LISTS.forEach(function (l) { if (!Array.isArray(s.nofap[l.key])) s.nofap[l.key] = []; });
-      s.today = s.today || localToday();
-      return s;
+      if (!s || !Array.isArray(s.goals)) return defaultState();
+      return migrate(s);
     } catch (e) { return defaultState(); }
   }
 
@@ -94,7 +180,18 @@
   }
 
   var S = load();
-  var ui = { tab: 'today', openDate: null, sheet: null, edit: null, q: { today: '', goals: '', rewards: '' } };
+  // Everything in `ui` lives in memory only — including the unlock flag, so a
+  // fresh start of the app is always locked.
+  var ui = {
+    locked: true, pin: '', pinErr: false, pinMode: 'unlock', pinFirst: '',
+    screen: 'today', drawer: false, modal: null,
+    calMonth: null, histLimit: PAGE, histOpen: null, edit: null,
+    journalDraft: '', jView: 'list', jId: null, jText: '', jConfirmDelete: false,
+    ud: freshUrge(), urgeOpen: null, urgeConfirmDelete: null, actionOpen: null,
+    q: { goals: '', rewards: '' }, nfNew: null
+  };
+
+  function freshUrge() { return { step: 1, intensity: 0, triggers: [], moods: [], note: '', suggested: [], did: [], outcome: '' }; }
 
   // ---------------------------------------------------------------- rules
   function totalPoints(goals) { return goals.reduce(function (t, g) { return t + g.points; }, 0); }
@@ -106,50 +203,7 @@
       if (done[g.id]) score += g.points;
       else if (g.nonNegotiable) missing.push(g.name);
     });
-    var result = missing.length ? 'reset' : score >= min ? 'count' : 'hold';
-    return { score: score, total: total, missing: missing, result: result };
-  }
-
-  function sortedRewards() {
-    return S.rewards.slice().sort(function (a, b) { return a.daysRequired - b.daysRequired; });
-  }
-
-  // Close the open day: snapshot goals, apply rules, advance to the next day.
-  function closeOpenDay() {
-    var ev = evaluate(S.goals, S.doneToday, S.settings.minScore);
-    var counter = ev.result === 'count' ? S.counter + 1 : ev.result === 'reset' ? 0 : S.counter;
-    S.history.push({
-      date: S.today,
-      items: S.goals.map(function (g) {
-        return { goalName: g.name, points: g.points, nonNegotiable: g.nonNegotiable, done: !!S.doneToday[g.id] };
-      }),
-      score: ev.score, minScore: S.settings.minScore, total: ev.total, result: ev.result, counterAfter: counter
-    });
-    S.counter = counter;
-    S.today = addDays(S.today, 1);
-    S.doneToday = {};
-    return ev;
-  }
-
-  // Re-derive every closed day's result and the counter chain from the stored
-  // snapshots. Each day keeps its own minimum, so later minimum changes never
-  // rewrite the past; only an explicit edit of a day changes its outcome.
-  function replayHistory() {
-    var c = 0;
-    S.history.forEach(function (h) {
-      var score = 0, total = 0, missing = false;
-      h.items.forEach(function (it) {
-        total += it.points;
-        if (it.done) score += it.points;
-        else if (it.nonNegotiable) missing = true;
-      });
-      h.score = score;
-      h.total = total;
-      h.result = missing ? 'reset' : score >= h.minScore ? 'count' : 'hold';
-      c = h.result === 'count' ? c + 1 : h.result === 'reset' ? 0 : c;
-      h.counterAfter = c;
-    });
-    S.counter = c;
+    return { score: score, total: total, missing: missing, result: missing.length ? 'reset' : score >= min ? 'count' : 'hold' };
   }
 
   function dayOutcome(items, min) {
@@ -162,31 +216,50 @@
     return { score: score, total: total, result: missing ? 'reset' : score >= min ? 'count' : 'hold' };
   }
 
-  // A day stays open until the end of the following day, so late check-ins
-  // still work. Anything older is closed automatically with what was ticked.
+  function sortedRewards() { return S.rewards.slice().sort(function (a, b) { return a.daysRequired - b.daysRequired; }); }
+
+  function closeOpenDay() {
+    var ev = evaluate(S.goals, S.doneToday, S.settings.minScore);
+    var counter = ev.result === 'count' ? S.counter + 1 : ev.result === 'reset' ? 0 : S.counter;
+    S.history.push({
+      date: S.today,
+      items: S.goals.map(function (g) { return { goalName: g.name, points: g.points, nonNegotiable: g.nonNegotiable, done: !!S.doneToday[g.id] }; }),
+      score: ev.score, minScore: S.settings.minScore, total: ev.total, result: ev.result, counterAfter: counter, relapseReason: ''
+    });
+    S.counter = counter;
+    S.today = addDays(S.today, 1);
+    S.doneToday = {};
+    return ev;
+  }
+
+  // Re-derives every closed day's result and the counter chain from the stored
+  // snapshots; each day keeps its own minimum.
+  function replayHistory() {
+    var c = 0;
+    S.history.forEach(function (h) {
+      var o = dayOutcome(h.items, h.minScore);
+      h.score = o.score; h.total = o.total; h.result = o.result;
+      c = h.result === 'count' ? c + 1 : h.result === 'reset' ? 0 : c;
+      h.counterAfter = c;
+    });
+    S.counter = c;
+  }
+
+  // A day stays open until the end of the following day. Anything older is
+  // closed automatically with whatever was ticked.
   function catchUp() {
-    var yesterday = addDays(localToday(), -1);
-    var closed = [];
-    var guard = 0;
-    while (S.today < yesterday && guard++ < MAX_CATCH_UP) {
-      closeOpenDay();
-      closed.push(S.history[S.history.length - 1]);
-    }
+    var yesterday = addDays(localToday(), -1), closed = [], guard = 0;
+    while (S.today < yesterday && guard++ < MAX_CATCH_UP) { closeOpenDay(); closed.push(S.history[S.history.length - 1]); }
     if (guard >= MAX_CATCH_UP && S.today < yesterday) S.today = yesterday;
     if (closed.length) {
       save();
       var resets = closed.filter(function (h) { return h.result === 'reset'; }).length;
-      var counts = closed.filter(function (h) { return h.result === 'count'; }).length;
       var body = closed.length === 1
-        ? fmt(closed[0].date) + ' was left open, so it was closed with the goals you had ticked (' + closed[0].score + '/' + closed[0].minScore + ').'
+        ? fmt(closed[0].date) + ' was left open, so it was closed with the tasks you had ticked (' + closed[0].score + '/' + closed[0].minScore + ').'
         : 'Days from ' + fmt(closed[0].date) + ' to ' + fmt(closed[closed.length - 1].date) + ' were left open and closed with what was ticked.';
-      body += resets ? ' A missed non-negotiable reset the counter.' : counts ? '' : ' Nothing changed.';
-      body += ' You are now at ' + S.counter + (S.counter === 1 ? ' day.' : ' days.');
-      ui.sheet = {
-        kind: 'info', kicker: 'While you were away', color: '#3F433C',
-        title: closed.length === 1 ? '1 day closed' : closed.length + ' days closed',
-        body: body, ok: 'Got it'
-      };
+      if (resets) body += ' A missed non-negotiable counted as a relapse — tap the orange day in the calendar to write why.';
+      body += ' You are now at ' + plural(S.counter, 'day', 'days') + '.';
+      ui.modal = { type: 'info', kicker: 'While you were away', color: '#3F433C', title: closed.length === 1 ? '1 day closed' : closed.length + ' days closed', body: body, ok: 'Got it' };
     }
     return closed.length;
   }
@@ -197,53 +270,525 @@
     if (S.settings.minScore < 1) S.settings.minScore = 1;
   }
 
+  function suggest(tags, intensity) {
+    return S.actions.map(function (a, i) { return { a: a, i: i, n: a.tags.filter(function (t) { return tags.indexOf(t) >= 0; }).length }; })
+      .sort(function (x, y) { return (y.n - x.n) || (x.i - y.i); })
+      .slice(0, intensity >= 7 ? 4 : 3).map(function (r) { return r.a.id; });
+  }
+
+  function nofapDays() { return Math.max(0, daysBetween(S.nofapSince, localToday())); }
+
   // ---------------------------------------------------------------- helpers
   function esc(s) {
-    return String(s).replace(/[&<>"']/g, function (c) {
-      return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
-    });
+    return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
   }
   function plural(n, one, many) { return n + ' ' + (n === 1 ? one : many); }
+  function toggleIn(list, v) { return list.indexOf(v) >= 0 ? list.filter(function (x) { return x !== v; }) : list.concat([v]); }
+  function attr(id) { return esc(id); }
 
+  function svg(w, sw, body, extra) {
+    return '<svg width="' + w + '" height="' + w + '" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="' + sw + '" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' + (extra || '') + '>' + body + '</svg>';
+  }
   var I = {
-    plus: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.8" stroke-linecap="round" aria-hidden="true"><path d="M12 6v12M6 12h12"/></svg>',
-    minus: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" aria-hidden="true"><path d="M6 12h12"/></svg>',
-    check: '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
-    checkSm: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>',
-    xSm: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>',
-    lock: '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>',
-    trash: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12.5a2 2 0 0 0 2 1.5h6a2 2 0 0 0 2-1.5L18 7M9 7V4.5h6V7"/></svg>',
-    chev: '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#5E6259" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>',
-    gift: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#B34A12" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="flex-shrink:0"><rect x="3.5" y="8" width="17" height="4" rx="1"/><path d="M5 12v8.5h14V12M12 8v12.5M12 8C10.5 4.5 6 4.5 6 7s3 1 6 1zm0 0c1.5-3.5 6-3.5 6-1s-3 1-6 1z"/></svg>',
-    tToday: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16 9.8"/></svg>',
-    tJourney: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="5" r="2.2"/><path d="M8.2 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.8"/></svg>',
-    tHistory: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/></svg>',
-    tNofap: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l7.5 3v5.5c0 4.6-3.2 8.2-7.5 9.5-4.3-1.3-7.5-4.9-7.5-9.5V6L12 3z"/><path d="M8.8 12.2l2.2 2.2 4.2-4.4"/></svg>',
-    tSetup: '<svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/></svg>'
+    plus: svg(16, 2.8, '<path d="M12 6v12M6 12h12"/>'),
+    minus: svg(16, 2.6, '<path d="M6 12h12"/>'),
+    check: svg(16, 3.2, '<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
+    checkSm: svg(12, 3.4, '<path d="M5 12.5l4.5 4.5L19 7.5"/>'),
+    xSm: svg(12, 3.4, '<path d="M7 7l10 10M17 7L7 17"/>'),
+    trash: svg(18, 2, '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12.5a2 2 0 0 0 2 1.5h6a2 2 0 0 0 2-1.5L18 7M9 7V4.5h6V7"/>'),
+    trashSm: svg(16, 2, '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12.5a2 2 0 0 0 2 1.5h6a2 2 0 0 0 2-1.5L18 7M9 7V4.5h6V7"/>'),
+    lock: svg(22, 2, '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
+    lockBig: svg(28, 2.2, '<rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/>'),
+    menu: svg(24, 2.2, '<path d="M4 7h16M4 12h16M4 17h10"/>'),
+    left: svg(18, 2.4, '<path d="M15 6l-6 6 6 6"/>'),
+    right: svg(18, 2.4, '<path d="M9 6l6 6-6 6"/>'),
+    chev: svg(18, 2.4, '<path d="M6 9l6 6 6-6"/>', ' class="chev"'),
+    flame: svg(22, 2.2, '<path d="M12 3c.8 3.2 4.5 5.2 4.5 9.5a4.5 4.5 0 0 1-9 0c0-2 1-3.4 2.2-4.4.1 1.8.9 3 2 3.4C11.4 9 11 6 12 3z"/>'),
+    back: svg(26, 2, '<path d="M9 5h11v14H9l-6-7z"/><path d="M12.5 9.5l5 5M17.5 9.5l-5 5"/>'),
+    pencil: svg(16, 2.2, '<path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/>'),
+    search: svg(18, 2.2, '<circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/>'),
+    nToday: svg(22, 2, '<circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8L16 9.8"/>'),
+    nJournal: svg(22, 2, '<path d="M6 4h11a2 2 0 0 1 2 2v14H8a2 2 0 0 1-2-2z"/><path d="M6 18a2 2 0 0 1 2-2h11M10 8h5M10 11h5"/>'),
+    nUrges: svg(22, 2, '<path d="M12 3c.8 3.2 4.5 5.2 4.5 9.5a4.5 4.5 0 0 1-9 0c0-2 1-3.4 2.2-4.4.1 1.8.9 3 2 3.4C11.4 9 11 6 12 3z"/>'),
+    nDays: svg(22, 2, '<rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/>'),
+    nJourney: svg(22, 2, '<circle cx="6" cy="19" r="2.2"/><circle cx="18" cy="5" r="2.2"/><path d="M8.2 19H15a3.5 3.5 0 0 0 0-7H9a3.5 3.5 0 0 1 0-7h6.8"/>'),
+    nSettings: svg(22, 2, '<path d="M4 7h10M18 7h2M4 17h4M12 17h8"/><circle cx="16" cy="7" r="2"/><circle cx="10" cy="17" r="2"/>')
   };
 
-  var SEARCH_ICON = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="6.5"/><path d="M16 16l4.5 4.5"/></svg>';
+  function itemRows(items) {
+    return items.map(function (it) {
+      return '<li class="' + (it.done ? 'done' : 'missed') + (it.nonNegotiable ? ' must' : '') + '"><span class="ic">' + (it.done ? I.checkSm : I.xSm) + '</span>' +
+        '<span class="nm">' + esc(it.goalName) + '</span>' + (it.nonNegotiable ? '<span class="mustlbl">Must</span>' : '') +
+        '<span class="pt">' + (it.done ? '+' + it.points : '0') + '</span></li>';
+    }).join('');
+  }
+  function pillOf(h) {
+    return h.result === 'count' ? { t: '+1 → ' + h.counterAfter, c: 'count' } : h.result === 'reset' ? { t: 'Relapsed', c: 'reset' } : { t: 'No change', c: 'hold' };
+  }
+  function nextInfo() {
+    var rewards = sortedRewards();
+    var next = rewards.find(function (r) { return r.daysRequired > S.counter; });
+    var prevDays = rewards.filter(function (r) { return r.daysRequired <= S.counter; }).reduce(function (m, r) { return Math.max(m, r.daysRequired); }, 0);
+    return { rewards: rewards, next: next, prevDays: prevDays };
+  }
+  function chip(on, accent) { return 'chip' + (on ? (accent ? ' on accent' : ' on') : ''); }
+  function sortedByWhen(list) { return list.slice().sort(function (a, b) { return (b.date + b.time).localeCompare(a.date + a.time); }); }
+  function preview(t) { return t.length > 140 ? t.slice(0, 140).trim() + '…' : t; }
 
-  function searchBox(key, label) {
-    return '<div class="search"><span class="search-ic">' + SEARCH_ICON + '</span>' +
-      '<input type="search" enterkeyhint="search" autocomplete="off" aria-label="' + label + '" placeholder="' + label + '" data-search="' + key + '" value="' + esc(ui.q[key]) + '">' +
-      '<button type="button" class="search-x" aria-label="Clear search" data-a="clearSearch" data-key="' + key + '"' + (ui.q[key] ? '' : ' hidden') + '>' + I.xSm + '</button></div>';
+  // ---------------------------------------------------------------- lock
+  function renderLock() {
+    var title = ui.pinMode === 'unlock' ? 'Enter your code to open' : ui.pinMode === 'new' ? 'Choose a new 6-digit code' : 'Enter the new code again';
+    var dots = '';
+    for (var i = 0; i < 6; i++) dots += '<span class="dot' + (i < ui.pin.length ? ' on' : '') + '"></span>';
+    var keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '', '0', 'back'].map(function (k) {
+      if (k === '') return ui.pinMode === 'unlock' ? '<span class="key blank"></span>' : '<button type="button" class="key text" data-a="pinCancel">Cancel</button>';
+      if (k === 'back') return '<button type="button" class="key ghost" aria-label="Delete last digit" data-a="pinKey" data-k="back">' + I.back + '</button>';
+      return '<button type="button" class="key" data-a="pinKey" data-k="' + k + '">' + k + '</button>';
+    }).join('');
+    var msg = ui.pinErr ? (ui.pinMode === 'confirm' || ui.pinMode === 'new' ? 'Codes did not match. Start again.' : 'Wrong code. Try again.') : '';
+    return '<div class="lock"><div class="lock-top"><span class="lock-ic">' + I.lockBig + '</span><h1>Improvement</h1><span class="lock-sub">' + title + '</span></div>' +
+      '<div class="dots" aria-label="Code entered">' + dots + '</div><span class="lock-msg" role="status">' + msg + '</span>' +
+      '<div class="keys">' + keys + '</div></div>';
   }
 
-  function noMatch(key) { return '<div class="empty nomatch" data-nomatch="' + key + '" hidden>No match for “<span></span>”.</div>'; }
+  function pinKey(k) {
+    if (k === 'back') { ui.pin = ui.pin.slice(0, -1); ui.pinErr = false; return render(); }
+    if (ui.pin.length >= 6) return;
+    ui.pin += k; ui.pinErr = false;
+    if (ui.pin.length < 6) return render();
+    var v = ui.pin;
+    ui.pin = '';
+    if (ui.pinMode === 'unlock') {
+      if (sha256(S.security.salt + v) === S.security.hash) { ui.locked = false; setBars(); }
+      else ui.pinErr = true;
+    } else if (ui.pinMode === 'new') {
+      ui.pinFirst = v; ui.pinMode = 'confirm';
+    } else {
+      if (v === ui.pinFirst) {
+        var salt = randomHex(16);
+        S.security = { salt: salt, hash: sha256(salt + v) };
+        save();
+        ui.pinMode = 'unlock'; ui.pinFirst = ''; ui.locked = false;
+        ui.modal = { type: 'info', kicker: 'Security', title: 'Code changed', body: 'Use your new code from the next time the app opens.', ok: 'Done', color: '#1E6A50' };
+        setBars();
+      } else { ui.pinMode = 'new'; ui.pinFirst = ''; ui.pinErr = true; }
+    }
+    render();
+  }
 
-  // Filters list items in place (no re-render) so the search field keeps focus.
+  function lockNow() { ui.locked = true; ui.pin = ''; ui.pinErr = false; ui.pinMode = 'unlock'; ui.drawer = false; ui.modal = null; setBars(); render(); }
+
+  function setBars() {
+    try { if (window.StationsStore && window.StationsStore.setDarkBars) window.StationsStore.setDarkBars(ui.locked); } catch (e) { }
+  }
+
+  // ---------------------------------------------------------------- today
+  function statusFor(ev) {
+    var min = S.settings.minScore;
+    if (!S.goals.length) return { cls: 'hold', t: 'No tasks yet', b: 'Add daily tasks in Settings to start scoring your days.', ct: 'No tasks', cb: 'Counter stays at ' + S.counter + '.' };
+    if (ev.missing.length) return { cls: 'reset', t: 'Non-negotiable still open', b: ev.missing.join(', ') + ' — if you close the day without it, it counts as a relapse.', ct: 'This will be a relapse', cb: 'Missing: ' + ev.missing.join(', ') + '. Counter goes back to 0.' };
+    if (ev.result === 'count') return { cls: 'count', t: 'This day counts', b: 'Close it and your counter moves to ' + (S.counter + 1) + '.', ct: 'Day counts', cb: 'Counter goes from ' + S.counter + ' to ' + (S.counter + 1) + '.' };
+    return { cls: 'hold', t: plural(min - ev.score, 'point', 'points') + ' to the minimum', b: 'Below it nothing happens — the counter stays at ' + S.counter + '.', ct: 'No change', cb: 'Below the minimum. Counter stays at ' + S.counter + '.' };
+  }
+
+  function renderCalendar() {
+    var real = localToday();
+    var month = ui.calMonth || real.slice(0, 7);
+    var cm = month.split('-').map(Number);
+    var firstDow = (new Date(Date.UTC(cm[0], cm[1] - 1, 1)).getUTCDay() + 6) % 7;
+    var dim = new Date(Date.UTC(cm[0], cm[1], 0)).getUTCDate();
+    var prefix = month + '-', byDate = {}, n = { count: 0, hold: 0, reset: 0 };
+    // Only this month's days are looked at.
+    S.history.forEach(function (h, i) { if (h.date.slice(0, 8) === prefix) byDate[h.date] = i; });
+    var cells = '';
+    for (var b = 0; b < firstDow; b++) cells += '<span></span>';
+    var words = { count: 'counted', hold: 'no change', reset: 'relapsed' };
+    for (var d = 1; d <= dim; d++) {
+      var iso = prefix + pad(d), idx = byDate[iso];
+      if (idx != null) {
+        var h = S.history[idx];
+        n[h.result]++;
+        cells += '<button type="button" class="cal-d ' + h.result + (iso === real ? ' is-today' : '') + '" data-a="calDay" data-idx="' + idx + '" aria-label="' + d + ' ' + MF[cm[1] - 1] + ': ' + h.score + '/' + h.minScore + ', ' + words[h.result] + '">' + d + '</button>';
+      } else {
+        var cls = iso === real ? 'today' : iso > real ? 'future' : 'nodata';
+        cells += '<button type="button" class="cal-d ' + cls + '" disabled aria-label="' + d + ' ' + MF[cm[1] - 1] + (cls === 'today' ? ': today' : cls === 'nodata' ? ': no data' : '') + '">' + d + '</button>';
+      }
+    }
+    var nextDisabled = month >= real.slice(0, 7);
+    return '<section class="card cal" aria-labelledby="cal-h"><div class="row-between">' +
+      '<button type="button" class="sq-soft" aria-label="Previous month" data-a="calPrev">' + I.left + '</button>' +
+      '<h2 id="cal-h" class="h3">' + MF[cm[1] - 1] + ' ' + cm[0] + '</h2>' +
+      '<button type="button" class="sq-soft" aria-label="Next month" data-a="calNext"' + (nextDisabled ? ' disabled' : '') + '>' + I.right + '</button></div>' +
+      '<div class="cal-grid cal-head"><span>M</span><span>T</span><span>W</span><span>T</span><span>F</span><span>S</span><span>S</span></div>' +
+      '<div class="cal-grid">' + cells + '</div>' +
+      '<div class="legend"><span><i class="lg-count"></i>Counted · ' + n.count + '</span><span><i class="lg-hold"></i>No change · ' + n.hold + '</span><span><i class="lg-reset"></i>Relapsed · ' + n.reset + '</span></div>' +
+      (S.history.length ? '' : '<p class="muted small">Fresh start. Each day you close gets its color here. Tap an orange day to read why you relapsed.</p>') +
+      '</section>';
+  }
+
+  function renderToday() {
+    var ev = evaluate(S.goals, S.doneToday, S.settings.minScore);
+    var min = S.settings.minScore, ni = nextInfo(), next = ni.next, real = localToday();
+    var nextPct = next ? Math.round((S.counter - ni.prevDays) / Math.max(1, next.daysRequired - ni.prevDays) * 100) : 100;
+    var away = next ? next.daysRequired - S.counter : 0;
+    var nextAway = next ? plural(away, 'day away', 'days away') : (S.rewards.length ? 'All reached' : 'Add rewards in Settings');
+    var C = 238.76, pct = Math.min(1, ev.score / Math.max(1, min));
+    var st = statusFor(ev);
+    var doneCount = S.goals.filter(function (g) { return S.doneToday[g.id]; }).length;
+    var future = S.today > real;
+    var goals = S.goals.map(function (g) {
+      var d = !!S.doneToday[g.id];
+      return '<button type="button" class="goal' + (d ? ' done' : '') + '" data-a="toggle" data-id="' + attr(g.id) + '" aria-pressed="' + d + '">' +
+        '<span class="box">' + (d ? I.check : '') + '</span><span class="txt"><span class="name">' + esc(g.name) + '</span>' +
+        (g.nonNegotiable ? '<span class="tag">Non-negotiable</span>' : '') + '</span><span class="pts">+' + g.points + '</span></button>';
+    }).join('');
+    var todays = sortedByWhen(S.journal).filter(function (e) { return e.date === real; }).map(function (e) {
+      return '<button type="button" class="jmini" data-a="openEntry" data-id="' + attr(e.id) + '"><span class="jmini-t">Saved at ' + esc(e.time) + '</span><span class="jmini-p">' + esc(preview(e.text)) + '</span></button>';
+    }).join('');
+    var dayLbl = S.today === real ? '' : S.today < real ? '<p class="hint">This is yesterday — it is still open. Close it to start today.</p>' : '';
+
+    return '<div class="screen">' +
+      '<section class="hero" aria-label="Progress"><div class="hero-top"><div class="col" style="gap:4px"><span class="hero-label">Successful days</span><span class="hero-count">' + S.counter + '</span></div>' +
+      '<div class="hero-next"><span class="hero-label">Next reward</span><span class="hero-next-name">' + esc(next ? next.name : 'All reached') + '</span><span class="hero-next-away">' + esc(nextAway) + '</span></div></div>' +
+      '<div class="bar"><div style="width:' + nextPct + '%"></div></div></section>' +
+      '<section class="score ' + st.cls + '" aria-label="Today\'s score"><div class="ring"><svg width="84" height="84" viewBox="0 0 92 92" aria-hidden="true">' +
+      '<circle cx="46" cy="46" r="38" fill="none" stroke="#FFFDF8" stroke-width="9"/>' +
+      (pct > 0 ? '<circle class="prog" cx="46" cy="46" r="38" fill="none" stroke="' + (ev.score >= min ? '#1E6A50' : '#1D211C') + '" stroke-width="9" stroke-linecap="round" stroke-dasharray="' + (pct * C).toFixed(2) + ' ' + C + '" transform="rotate(-90 46 46)"/>' : '') +
+      '</svg><div class="ring-txt"><span class="ring-num' + ((ev.score + '/' + min).length > 5 ? ' small' : '') + '">' + ev.score + '/' + min + '</span></div></div>' +
+      '<div class="status"><b>' + esc(st.t) + '</b><span>' + esc(st.b) + '</span></div></section>' +
+      dayLbl +
+      '<div class="row-between" style="align-items:baseline;padding-top:4px"><h2 class="h2">Daily tasks</h2><span class="sub">' + doneCount + ' of ' + S.goals.length + ' done</span></div>' +
+      '<div class="stack">' + (goals || '<div class="empty">No tasks yet. Add them in Settings.</div>') + '</div>' +
+      '<button type="button" class="big-btn" data-a="askClose"' + (future || !S.goals.length ? ' disabled' : '') + '>Close ' + fmt(S.today) + '…</button>' +
+      (future ? '<p class="hint">You can tick tasks ahead, but ' + fmt(S.today) + ' can only be closed once it begins.</p>' : '') +
+      renderCalendar() +
+      '<section class="card" aria-labelledby="diary-h"><div class="row-between"><h2 id="diary-h" class="h2">Journal</h2><button type="button" class="link" data-a="go" data-to="journal">All entries</button></div>' +
+      '<label for="diary-today" class="lbl">Write about today</label>' +
+      '<textarea id="diary-today" class="area" rows="5" placeholder="How did today go? What did you learn?" data-a="journalDraft">' + esc(ui.journalDraft) + '</textarea>' +
+      '<button type="button" class="btn ok" data-a="saveDraft"' + (ui.journalDraft.trim() ? '' : ' disabled') + '>Save entry</button>' + todays + '</section>' +
+      '</div>';
+  }
+
+  // ---------------------------------------------------------------- journal
+  function renderJournal() {
+    var cur = S.journal.find(function (e) { return e.id === ui.jId; });
+    if (ui.jView === 'read' && cur) {
+      return '<div class="screen"><button type="button" class="back-link" data-a="jBack">' + I.left + 'All entries</button>' +
+        '<span class="kicker">' + esc(fmtLong(cur.date)) + ' · ' + esc(cur.time) + '</span>' +
+        '<p class="jtext">' + esc(cur.text) + '</p>' +
+        '<div class="two"><button type="button" class="btn outline" data-a="jEdit">Edit</button>' +
+        '<button type="button" class="btn outline danger" data-a="jDelete">' + (ui.jConfirmDelete ? 'Tap again to delete' : 'Delete') + '</button></div></div>';
+    }
+    if (ui.jView === 'edit') {
+      return '<div class="screen"><label for="j-edit" class="kicker">' + (cur ? 'Edit entry' : 'New entry · ' + fmt(localToday())) + '</label>' +
+        '<textarea id="j-edit" class="area big" rows="14" placeholder="Write freely…" data-a="jText">' + esc(ui.jText) + '</textarea>' +
+        '<div class="two"><button type="button" class="btn outline" data-a="jCancel">Cancel</button><button type="button" class="btn ok" data-a="jSave">Save</button></div></div>';
+    }
+    var list = sortedByWhen(S.journal).map(function (e) {
+      return '<button type="button" class="jcard" data-a="openEntry" data-id="' + attr(e.id) + '"><span class="jcard-h"><span>' + esc(fmt(e.date)) + '</span><span>' + esc(e.time) + '</span></span>' +
+        '<span class="jcard-p">' + esc(preview(e.text)) + '</span></button>';
+    }).join('');
+    return '<div class="screen"><button type="button" class="btn dark" data-a="jNew">' + I.plus + 'New entry</button>' +
+      (list || '<p class="muted">No entries yet. Write your first one here or on the Today page.</p>') + '</div>';
+  }
+
+  // ---------------------------------------------------------------- urge
+  function renderUrge() {
+    var ud = ui.ud;
+    if (ud.step === 2) {
+      var tags = ud.triggers.concat(ud.moods);
+      var byId = {}; S.actions.forEach(function (a) { byId[a.id] = a; });
+      var sugg = ud.suggested.filter(function (id) { return byId[id]; }).map(function (id) {
+        var a = byId[id], on = ud.did.indexOf(id) >= 0;
+        var m = a.tags.filter(function (t) { return tags.indexOf(t) >= 0; });
+        return '<button type="button" class="goal' + (on ? ' done' : '') + '" data-a="udDid" data-id="' + attr(id) + '" aria-pressed="' + on + '"><span class="box">' + (on ? I.check : '') + '</span>' +
+          '<span class="txt"><span class="name">' + esc(a.name) + '</span><span class="why">' + esc(m.length ? 'Fits: ' + m.join(', ') : 'Works for most urges') + '</span></span></button>';
+      }).join('');
+      return '<div class="screen">' +
+        '<div class="urge-hero"><span class="urge-k">Urge ' + ud.intensity + '/10 · ' + esc(tags.length ? tags.slice(0, 3).join(', ') : 'no trigger picked') + '</span>' +
+        '<span class="urge-t">Do one of these now. The urge passes in 15–20 minutes.</span></div>' +
+        '<div class="stack">' + (sugg || '<div class="empty">No actions in your library yet. Add some in Settings → NoFap.</div>') + '</div>' +
+        '<section class="stack"><h2 class="q">How did it end?</h2><div class="two">' +
+        '<button type="button" class="out pass' + (ud.outcome === 'passed' ? ' on' : '') + '" data-a="udOut" data-v="passed" aria-pressed="' + (ud.outcome === 'passed') + '">Urge passed</button>' +
+        '<button type="button" class="out rel' + (ud.outcome === 'relapsed' ? ' on' : '') + '" data-a="udOut" data-v="relapsed" aria-pressed="' + (ud.outcome === 'relapsed') + '">I relapsed</button></div>' +
+        '<span class="muted small">You can save now and update this later from the Urges log.</span></section>' +
+        '<div class="two"><button type="button" class="btn outline" data-a="udBack">Back</button><button type="button" class="btn dark" data-a="udSave">Save</button></div></div>';
+    }
+    var nums = '';
+    for (var i = 1; i <= 10; i++) nums += '<button type="button" class="num ' + chip(ud.intensity === i, true) + '" data-a="udInt" data-v="' + i + '" aria-pressed="' + (ud.intensity === i) + '">' + i + '</button>';
+    function chips(list, key) {
+      return list.map(function (t) { var on = ud[key].indexOf(t) >= 0; return '<button type="button" class="' + chip(on) + '" data-a="udTag" data-key="' + key + '" data-v="' + esc(t) + '" aria-pressed="' + on + '">' + esc(t) + '</button>'; }).join('');
+    }
+    return '<div class="screen urge">' +
+      '<p class="lede">Stop for one minute. Answer three quick questions and you will get actions that fit this moment.</p>' +
+      '<section class="stack"><h2 class="q">1. How strong is the urge?</h2><div class="nums">' + nums + '</div>' +
+      '<div class="row-between muted small"><span>Light</span><span>Very strong</span></div></section>' +
+      '<section class="stack"><h2 class="q">2. What triggered it?</h2><div class="chips">' + chips(TRIGGERS, 'triggers') + '</div></section>' +
+      '<section class="stack"><h2 class="q">3. How do you feel right now?</h2><div class="chips">' + chips(MOODS, 'moods') + '</div></section>' +
+      '<section class="stack"><label for="u-note" class="q">Anything to add? <span class="muted" style="font-weight:500">(optional)</span></label>' +
+      '<textarea id="u-note" class="area" rows="3" placeholder="Where are you, what were you doing…" data-a="udNote">' + esc(ud.note) + '</textarea></section>' +
+      '<button type="button" class="btn urge-btn" data-a="udSuggest"' + (ud.intensity ? '' : ' disabled') + '>Show me what to do</button></div>';
+  }
+
+  // ---------------------------------------------------------------- urges log
+  function renderUrges() {
+    var byId = {}; S.actions.forEach(function (a) { byId[a.id] = a; });
+    var passed = S.urges.filter(function (u) { return u.outcome === 'passed'; }).length;
+    var relapsed = S.urges.filter(function (u) { return u.outcome === 'relapsed'; }).length;
+    var list = sortedByWhen(S.urges).map(function (u) {
+      var open = ui.urgeOpen === u.id;
+      var pill = u.outcome === 'passed' ? ['Passed', 'count'] : u.outcome === 'relapsed' ? ['Relapsed', 'reset'] : ['Open', 'hold'];
+      var body = '';
+      if (open) {
+        var sugg = (u.suggestedActionIds || []).map(function (id) {
+          var a = byId[id], on = (u.didActionIds || []).indexOf(id) >= 0;
+          return '<button type="button" class="act' + (on ? ' on' : '') + '" data-a="uDid" data-id="' + attr(u.id) + '" data-act="' + attr(id) + '" aria-pressed="' + on + '">' +
+            '<span class="box sm">' + (on ? I.checkSm : '') + '</span><span class="grow">' + esc(a ? a.name : 'Removed action') + '</span><span class="state">' + (on ? 'Did it' : 'Not done') + '</span></button>';
+        }).join('');
+        body = '<div class="u-body"><div class="u-ans"><span><strong>Triggers:</strong> ' + esc(u.triggers.join(', ') || '—') + '</span><span><strong>Feeling:</strong> ' + esc(u.moods.join(', ') || '—') + '</span></div>' +
+          '<div class="stack" style="gap:6px"><span class="kicker sm">Recommended · tap what you did</span>' + (sugg || '<span class="muted small">No suggestions were saved.</span>') + '</div>' +
+          '<div class="two"><button type="button" class="out pass sm' + (u.outcome === 'passed' ? ' on' : '') + '" data-a="uOut" data-id="' + attr(u.id) + '" data-v="passed">Urge passed</button>' +
+          '<button type="button" class="out rel sm' + (u.outcome === 'relapsed' ? ' on' : '') + '" data-a="uOut" data-id="' + attr(u.id) + '" data-v="relapsed">Relapsed</button></div>' +
+          '<label class="kicker sm stack" style="gap:6px">Note<textarea class="area note" rows="2" data-a="uNote" data-id="' + attr(u.id) + '">' + esc(u.note) + '</textarea></label>' +
+          '<button type="button" class="del-link" data-a="uDelete" data-id="' + attr(u.id) + '">' + I.trashSm + (ui.urgeConfirmDelete === u.id ? 'Tap again to delete' : 'Delete') + '</button></div>';
+      }
+      return '<div class="fold' + (open ? ' open' : '') + '"><button type="button" class="u-head" data-a="uToggle" data-id="' + attr(u.id) + '" aria-expanded="' + open + '">' +
+        '<span class="u-int"><b>' + u.intensity + '</b><small>/10</small></span><span class="u-mid"><span class="u-when">' + esc(fmt(u.date)) + ' · ' + esc(u.time) + '</span>' +
+        '<span class="u-sum">' + esc(u.triggers.concat(u.moods).join(', ') || 'No trigger picked') + '</span></span><span class="res ' + pill[1] + '">' + pill[0] + '</span></button>' + body + '</div>';
+    }).join('');
+    return '<div class="screen"><div class="stats three"><div class="stat"><b>' + S.urges.length + '</b><span>urges logged</span></div>' +
+      '<div class="stat count"><b>' + passed + '</b><span>passed</span></div><div class="stat reset"><b>' + relapsed + '</b><span>relapsed</span></div></div>' +
+      (list || '<p class="muted">Nothing logged yet. When an urge hits, tap the orange “Urge hit” button.</p>') + '</div>';
+  }
+
+  // ---------------------------------------------------------------- days
+  function renderDays() {
+    var H = S.history, n = H.length;
+    var cnt = function (r) { return H.filter(function (h) { return h.result === r; }).length; };
+    var rows = '';
+    var shown = Math.min(n, ui.histLimit);
+    for (var k = 0; k < shown; k++) {
+      var idx = n - 1 - k, h = H[idx], p = parts(h.date), open = ui.histOpen === idx, editing = open && ui.edit && ui.edit.idx === idx;
+      var pill = pillOf(h), doneN = h.items.filter(function (it) { return it.done; }).length;
+      var body = '';
+      if (editing) {
+        var items = h.items.map(function (it, i) { return Object.assign({}, it, { done: ui.edit.done[i] }); });
+        var o = dayOutcome(items, ui.edit.min), rl = o.result === 'count' ? 'Counts' : o.result === 'reset' ? 'Relapse' : 'No change';
+        body = '<div class="d-body"><ul class="items">' + items.map(function (it, i) {
+          return '<li class="' + (it.done ? 'done' : 'missed') + (it.nonNegotiable ? ' must' : '') + ' editable" role="button" tabindex="0" aria-pressed="' + it.done + '" data-a="editItem" data-i="' + i + '">' +
+            '<span class="ic">' + (it.done ? I.checkSm : I.xSm) + '</span><span class="nm">' + esc(it.goalName) + '</span>' + (it.nonNegotiable ? '<span class="mustlbl">Must</span>' : '') +
+            '<span class="pt">' + (it.done ? '+' + it.points : '0') + '</span></li>';
+        }).join('') + '</ul>' +
+          '<div class="row-between"><div class="col"><span class="edit-lbl">Minimum for this day</span><span class="day-sub">Other days keep their own</span></div>' +
+          '<div class="stepper"><button type="button" class="sq light" aria-label="Lower this day\'s minimum" data-a="editMinDec"' + (ui.edit.min <= 1 ? ' disabled' : '') + '>' + I.minus + '</button>' +
+          '<span class="pts-val">' + ui.edit.min + '</span><button type="button" class="sq light" aria-label="Raise this day\'s minimum" data-a="editMinInc"' + (ui.edit.min >= Math.max(1, o.total) ? ' disabled' : '') + '>' + I.plus + '</button></div></div>' +
+          '<div class="row-between edit-preview"><span class="day-score">' + o.score + '/' + ui.edit.min + '</span><span class="res ' + o.result + '">' + rl + '</span></div>' +
+          '<div class="two"><button type="button" class="btn ghost" data-a="cancelEdit">Cancel</button><button type="button" class="btn dark" data-a="saveEdit">Save day</button></div></div>';
+      } else if (open) {
+        body = '<div class="d-body">' + (h.result === 'reset' ? '<div class="reason"><span class="kicker sm deep">Relapse reason</span><span class="reason-t">' + esc(h.relapseReason || 'No reason written yet.') + '</span>' +
+          '<button type="button" class="btn-sm" data-a="relOpen" data-idx="' + idx + '">Read / edit</button></div>' : '') +
+          '<ul class="items">' + itemRows(h.items) + '</ul>' +
+          '<button type="button" class="pill-btn" data-a="editDay" data-idx="' + idx + '">' + I.pencil + 'Edit this day</button></div>';
+      }
+      rows += '<div class="fold' + (open ? ' open' : '') + '"><button type="button" class="day-head" data-a="dayToggle" data-idx="' + idx + '" aria-expanded="' + open + '">' +
+        '<span class="day-date"><small>' + p.wd + '</small><b>' + p.day + '</b></span><span class="day-mid"><span class="day-score">' + h.score + '/' + h.minScore + '</span>' +
+        '<span class="day-sub">' + p.mon + (p.year !== parts(localToday()).year ? ' ' + p.year : '') + ' · ' + doneN + ' of ' + h.items.length + ' tasks' + (h.edited ? '<span class="edited-tag">Edited</span>' : '') + '</span></span>' +
+        '<span class="res ' + pill.c + '">' + pill.t + '</span>' + I.chev + '</button>' + body + '</div>';
+    }
+    return '<div class="screen"><div class="stats four"><div class="stat"><b>' + n + '</b><span>days</span></div><div class="stat count"><b>' + cnt('count') + '</b><span>counted</span></div>' +
+      '<div class="stat hold"><b>' + cnt('hold') + '</b><span>no change</span></div><div class="stat reset"><b>' + cnt('reset') + '</b><span>relapsed</span></div></div>' +
+      (rows || '<p class="muted">No days closed yet. Close your first day on the Today page.</p>') +
+      (n > shown ? '<button type="button" class="dashed" data-a="histMore">Show 30 more days · ' + (n - shown) + ' left</button>' : '') + '</div>';
+  }
+
+  // ---------------------------------------------------------------- journey
+  function renderJourney() {
+    var rewards = sortedRewards(), lastReset = -1;
+    S.history.forEach(function (h, i) { if (h.result === 'reset') lastReset = i; });
+    var runStart = lastReset >= 0 ? addDays(S.history[lastReset].date, 1) : (S.history.length ? S.history[0].date : S.today);
+    function reachedOn(days) {
+      for (var i = lastReset + 1; i < S.history.length; i++) { var h = S.history[i]; if (h.result === 'count' && h.counterAfter === days) return h.date; }
+      return null;
+    }
+    var list = [{ name: 'Start', daysRequired: 0, start: true }].concat(rewards), nextIdx = -1;
+    for (var k = 0; k < list.length; k++) if (list[k].daysRequired > S.counter) { nextIdx = k; break; }
+    var items = list.map(function (r, i) {
+      var reached = r.daysRequired <= S.counter, isNext = i === nextIdx, after = list[i + 1], fill = 0;
+      if (after) fill = Math.max(0, Math.min(100, (S.counter - r.daysRequired) / Math.max(1, after.daysRequired - r.daysRequired) * 100));
+      var here = !!after && S.counter > r.daysRequired && S.counter < after.daysRequired, meta;
+      if (r.start) meta = 'Run started ' + fmt(runStart);
+      else if (reached) { var d = reachedOn(r.daysRequired); meta = d ? 'Unlocked ' + fmt(d) : 'Unlocked'; }
+      else { var away = r.daysRequired - S.counter; meta = plural(away, 'day', 'days') + ' away · earliest ' + fmt(addDays(S.today, away - 1)); }
+      var cls = reached ? 'reached' : isNext ? 'next' : '';
+      return '<li><div class="rail"><span class="node ' + cls + '">' + (reached ? I.check : isNext ? '<span class="ndot"></span>' : '') + '</span>' +
+        (after ? '<div class="seg"><div class="fill" style="height:' + fill.toFixed(1) + '%"></div>' + (here ? '<span class="here" aria-label="You are here" style="top:' + fill.toFixed(1) + '%"></span>' : '') + '</div>' : '') +
+        '</div><div class="st-body"><div class="st-card ' + cls + '"><div class="row-between" style="align-items:baseline;gap:8px"><span class="st-name">' + esc(r.name) + '</span><span class="st-day">Day ' + r.daysRequired + '</span></div>' +
+        '<span class="st-meta">' + esc(meta) + '</span></div></div></li>';
+    }).join('');
+    return '<div class="screen"><p class="lede">Current run: day ' + S.counter + '. Every day at or above the minimum moves you one stop. A relapse sends you back to the start.</p>' +
+      '<ol class="route">' + items + '</ol>' + (rewards.length ? '' : '<div class="empty">No rewards yet. Add them in Settings.</div>') + '</div>';
+  }
+
+  // ---------------------------------------------------------------- settings
+  function searchBox(key, label) {
+    return '<div class="search"><span class="search-ic">' + I.search + '</span><input type="search" enterkeyhint="search" autocomplete="off" aria-label="' + label + '" placeholder="' + label + '" data-search="' + key + '" value="' + esc(ui.q[key]) + '">' +
+      '<button type="button" class="search-x" aria-label="Clear search" data-a="clearSearch" data-key="' + key + '"' + (ui.q[key] ? '' : ' hidden') + '>' + I.xSm + '</button></div>';
+  }
+  function noMatch(key) { return '<div class="empty nomatch" data-nomatch="' + key + '" hidden>No match for “<span></span>”.</div>'; }
+  function nfCountText(l) { var n = S.nofap[l.key].length; return (n ? plural(n, 'item', 'items') + ' · ' : '') + l.hint; }
+
+  function renderSettings() {
+    var total = totalPoints(S.goals), min = S.settings.minScore, allTags = TRIGGERS.concat(MOODS);
+    var goals = S.goals.map(function (g) {
+      return '<div class="edit-card" data-name="' + esc(g.name.toLowerCase()) + '"><div class="edit-row">' +
+        '<input class="field" type="text" aria-label="Task name" maxlength="60" value="' + esc(g.name) + '" data-a="renameGoal" data-id="' + attr(g.id) + '">' +
+        '<button type="button" class="icon-btn" aria-label="Remove task" data-a="removeGoal" data-id="' + attr(g.id) + '">' + I.trash + '</button></div>' +
+        '<div class="row-between" style="gap:8px"><div class="stepper">' +
+        '<button type="button" class="sq light" aria-label="Fewer points" data-a="ptsDec" data-id="' + attr(g.id) + '"' + (g.points <= 1 ? ' disabled' : '') + '>' + I.minus + '</button>' +
+        '<span class="pts-val">' + g.points + ' pts</span><button type="button" class="sq light" aria-label="More points" data-a="ptsInc" data-id="' + attr(g.id) + '"' + (g.points >= 50 ? ' disabled' : '') + '>' + I.plus + '</button></div>' +
+        '<button type="button" class="switch-btn" aria-pressed="' + g.nonNegotiable + '" data-a="toggleMust" data-id="' + attr(g.id) + '">Non-negotiable<span class="switch"><i></i></span></button></div></div>';
+    }).join('');
+    var rewards = S.rewards.map(function (r) {
+      return '<div class="edit-card row" data-name="' + esc(r.name.toLowerCase()) + '">' +
+        '<input class="field" type="text" aria-label="Reward name" maxlength="60" value="' + esc(r.name) + '" data-a="renameReward" data-id="' + attr(r.id) + '">' +
+        '<label class="days-lbl"><input class="field num" type="number" inputmode="numeric" min="1" max="9999" aria-label="Days required" value="' + r.daysRequired + '" data-a="setDays" data-id="' + attr(r.id) + '">days</label>' +
+        '<button type="button" class="icon-btn" aria-label="Remove reward" data-a="removeReward" data-id="' + attr(r.id) + '">' + I.trash + '</button></div>';
+    }).join('');
+    var actions = S.actions.map(function (a) {
+      var open = ui.actionOpen === a.id;
+      return '<div class="edit-card"><div class="edit-row">' +
+        '<input class="field" type="text" aria-label="Action name" maxlength="80" value="' + esc(a.name) + '" data-a="renameAction" data-id="' + attr(a.id) + '">' +
+        '<button type="button" class="tags-btn" data-a="actionTags" data-id="' + attr(a.id) + '" aria-expanded="' + open + '">Tags (' + a.tags.length + ')</button>' +
+        '<button type="button" class="icon-btn" aria-label="Remove action" data-a="removeAction" data-id="' + attr(a.id) + '">' + I.trash + '</button></div>' +
+        (open ? '<div class="chips sm">' + allTags.map(function (t) {
+          var on = a.tags.indexOf(t) >= 0;
+          return '<button type="button" class="' + chip(on) + '" data-a="actionTag" data-id="' + attr(a.id) + '" data-v="' + esc(t) + '" aria-pressed="' + on + '">' + esc(t) + '</button>';
+        }).join('') + '</div>' : '<span class="muted small">' + esc(a.tags.length ? a.tags.join(' · ') : 'No tags — suggested only as a backup') + '</span>') + '</div>';
+    }).join('');
+    var lists = NOFAP_LISTS.map(function (l) {
+      var rows = S.nofap[l.key].map(function (it, i) {
+        return '<div class="nf-item"><span class="nf-num nf-' + l.key + '">' + (i + 1) + '</span>' +
+          '<textarea class="field nf-text" rows="1" maxlength="500" aria-label="' + esc(l.title) + ' item ' + (i + 1) + '" placeholder="Write it here…" data-a="nfEdit" data-list="' + l.key + '" data-id="' + attr(it.id) + '">' + esc(it.text) + '</textarea>' +
+          '<button type="button" class="icon-btn" aria-label="Delete item" data-a="nfRemove" data-list="' + l.key + '" data-id="' + attr(it.id) + '">' + I.trash + '</button></div>';
+      }).join('');
+      return '<div class="stack nf-sec" style="gap:8px"><div class="col"><span class="h4">' + l.title + '</span><span class="sub" data-nfcount="' + l.key + '">' + nfCountText(l) + '</span></div>' + rows +
+        '<button type="button" class="dashed sm" data-a="nfAdd" data-list="' + l.key + '">' + I.plus + l.add + '</button></div>';
+    }).join('');
+    var nd = nofapDays();
+
+    return '<div class="screen wide">' +
+      '<section class="rules" aria-label="Daily minimum"><div class="row-between"><div class="col" style="gap:3px"><span class="rules-t">Minimum score</span><span class="rules-s">out of ' + total + ' possible points</span></div>' +
+      '<div class="stepper"><button type="button" class="sq" aria-label="Lower minimum" data-a="minDec"' + (min <= 1 ? ' disabled' : '') + '>' + I.minus + '</button><span class="min-val">' + min + '</span>' +
+      '<button type="button" class="sq" aria-label="Raise minimum" data-a="minInc"' + (min >= total ? ' disabled' : '') + '>' + I.plus + '</button></div></div>' +
+      '<p class="min-note">Applies from ' + fmt(S.today) + ' on. Closed days keep the minimum they had — edit a single day from Days.</p>' +
+      '<ul><li>Reach the minimum → +1 successful day.</li><li>Below the minimum → nothing changes.</li><li>Miss a non-negotiable → relapse, counter back to 0.</li></ul></section>' +
+
+      '<section class="stack" style="gap:10px" aria-labelledby="set-goals"><div class="row-between"><div class="col"><h2 id="set-goals" class="h2">Daily tasks</h2><span class="sub">' + plural(S.goals.length, 'task', 'tasks') + ' · ' + total + ' pts</span></div>' +
+      '<button type="button" class="pill-btn solid" data-a="addGoal">' + I.plus + 'Add task</button></div>' +
+      (S.goals.length > 3 ? searchBox('goals', 'Search tasks') : '') + '<div class="stack" style="gap:10px" data-list="goals">' + goals + '</div>' + noMatch('goals') + '</section>' +
+
+      '<section class="stack" style="gap:10px" aria-labelledby="set-rewards"><div class="row-between"><div class="col"><h2 id="set-rewards" class="h2">Rewards</h2><span class="sub">stations on your journey</span></div>' +
+      '<button type="button" class="pill-btn solid" data-a="addReward">' + I.plus + 'Add reward</button></div>' +
+      (S.rewards.length > 3 ? searchBox('rewards', 'Search rewards') : '') + '<div class="stack" style="gap:10px" data-list="rewards">' + rewards + '</div>' + noMatch('rewards') + '</section>' +
+
+      '<section class="stack" style="gap:10px" aria-labelledby="set-nofap"><div class="col"><h2 id="set-nofap" class="h2">NoFap</h2><span class="sub">Clean for ' + plural(nd, 'day', 'days') + ' · resets when you log a relapse</span></div>' +
+      '<label class="edit-card row since">Clean since<input class="field date" type="date" max="' + localToday() + '" value="' + S.nofapSince + '" data-a="nofapSince"></label>' +
+      '<div class="row-between" style="padding-top:6px"><div class="col"><span class="h4">Actions for urges</span><span class="sub">Tags decide when each one is suggested</span></div>' +
+      '<button type="button" class="pill-btn solid" data-a="addAction">' + I.plus + 'Add</button></div>' + actions + lists + '</section>' +
+
+      '<section class="stack" style="gap:10px" aria-labelledby="set-sec"><h2 id="set-sec" class="h2">Security</h2>' +
+      '<p class="lede">The app asks for your 6-digit code every time it starts. Once open, it stays open until you close the app or lock it.</p>' +
+      '<button type="button" class="btn outline icon" data-a="lockNow">' + I.lock + 'Lock now</button>' +
+      '<button type="button" class="btn ghost" data-a="changeCode">Change code</button></section>' +
+      '<p class="foot"><button type="button" class="link small danger" data-a="askReset">Erase all data</button></p></div>';
+  }
+
+  // ---------------------------------------------------------------- chrome
+  var TITLES = { today: 'Today', journal: 'Journal', urge: 'Urge hit', urges: 'Urges log', days: 'Days', journey: 'Journey', settings: 'Settings' };
+
+  function renderDrawer() {
+    if (!ui.drawer) return '';
+    var items = [['today', 'Today', I.nToday], ['journal', 'Journal', I.nJournal], ['urges', 'Urges log', I.nUrges], ['days', 'Days', I.nDays], ['journey', 'Journey', I.nJourney], ['settings', 'Settings', I.nSettings]];
+    return '<div class="drawer-wrap"><button type="button" class="drawer-scrim" aria-label="Close menu" data-a="closeDrawer"></button><nav class="drawer" aria-label="Pages">' +
+      '<div class="drawer-h"><span class="drawer-t">Improvement</span><span class="sub">' + plural(S.counter, 'successful day', 'successful days') + ' · clean for ' + plural(nofapDays(), 'day', 'days') + '</span></div>' +
+      items.map(function (it) { return '<button type="button" class="nav-i" data-a="go" data-to="' + it[0] + '"' + (ui.screen === it[0] ? ' aria-current="page"' : '') + '>' + it[2] + it[1] + '</button>'; }).join('') +
+      '<span class="grow"></span><button type="button" class="nav-i lock-i" data-a="lockNow">' + I.lock + 'Lock app</button></nav></div>';
+  }
+
+  function renderModal() {
+    var m = ui.modal;
+    if (!m) return '';
+    var inner = '';
+    if (m.type === 'confirm') {
+      var ev = evaluate(S.goals, S.doneToday, S.settings.minScore), st = statusFor(ev);
+      inner = '<span class="k">Close day</span><h2 id="m-title">Close ' + fmt(S.today) + '?</h2>' +
+        '<div class="confirm-box ' + st.cls + '"><span class="cb-score">' + ev.score + '/' + S.settings.minScore + '</span><span class="col"><b>' + esc(st.ct) + '</b><span>' + esc(st.cb) + '</span></span></div>' +
+        '<p>You can’t change today’s tasks after closing (you can still edit the day later from Days).</p>' +
+        '<div class="two"><button type="button" class="btn outline" data-a="closeModal">Cancel</button><button type="button" class="btn dark" data-a="closeDay">Yes, close day</button></div>';
+    } else if (m.type === 'relapse') {
+      var h = S.history[m.idx];
+      if (!h) { ui.modal = null; return ''; }
+      var missed = h.items.filter(function (it) { return it.nonNegotiable && !it.done; }).map(function (it) { return it.goalName; }).join(', ') || '—';
+      inner = '<span class="k deep">' + esc(fmtLong(h.date)) + '</span><h2 id="m-title">Relapsed</h2>' +
+        '<p>' + (m.isNew ? 'You missed a non-negotiable, so the counter is back to 0. Write down what happened — it helps you see the pattern.' : 'This is what you wrote for this day. You can change it or delete it.') + '</p>' +
+        '<span class="missed">Missed: ' + esc(missed) + '</span><label for="rel-reason" class="lbl strong">Relapse reason</label>' +
+        '<textarea id="rel-reason" class="area" rows="4" placeholder="What happened? What will you do differently?" data-a="relDraft">' + esc(m.draft) + '</textarea>' +
+        '<button type="button" class="btn dark" data-a="relSave">Save reason</button><div class="row-between">' +
+        (h.relapseReason ? '<button type="button" class="link danger" data-a="relDelete">Delete reason</button>' : '<span></span>') +
+        '<button type="button" class="link" data-a="closeModal">' + (m.isNew ? 'Skip for now' : 'Close') + '</button></div>';
+    } else if (m.type === 'day') {
+      var d = S.history[m.idx];
+      if (!d) { ui.modal = null; return ''; }
+      var pl = pillOf(d);
+      inner = '<span class="k">' + esc(fmtLong(d.date)) + '</span><div class="row-between"><h2 id="m-title" class="big-score">' + d.score + '/' + d.minScore + '</h2><span class="res ' + pl.c + '">' + pl.t + '</span></div>' +
+        '<ul class="items">' + itemRows(d.items) + '</ul><div class="two"><button type="button" class="btn outline" data-a="dayEditFromModal" data-idx="' + m.idx + '">Edit this day</button><button type="button" class="btn dark" data-a="closeModal">Close</button></div>';
+    } else if (m.type === 'ask') {
+      inner = '<span class="k" style="color:' + m.color + '">' + esc(m.kicker) + '</span><h2 id="m-title">' + esc(m.title) + '</h2><p>' + esc(m.body) + '</p>' +
+        '<div class="two"><button type="button" class="btn ghost" data-a="closeModal">Cancel</button><button type="button" class="btn danger-fill" data-a="askYes">' + esc(m.ok) + '</button></div>';
+    } else {
+      inner = '<span class="k" style="color:' + m.color + '">' + esc(m.kicker) + '</span><h2 id="m-title">' + esc(m.title) + '</h2><p>' + esc(m.body) + '</p>' +
+        '<button type="button" class="btn dark" data-a="closeModal">' + esc(m.ok) + '</button>';
+    }
+    return '<div class="scrim" data-a="scrim"><div class="sheet' + (m.reward ? ' reward' : '') + '" role="dialog" aria-modal="true" aria-labelledby="m-title">' + inner + '</div></div>';
+  }
+
+  var root = document.getElementById('app');
+  var lastScreen = null, lastLocked = null;
+
+  function render() {
+    purgeBlankNofap();
+    var main = document.getElementById('main');
+    var keep = main && lastScreen === ui.screen + ui.jView && !lastLocked ? main.scrollTop : 0;
+    if (ui.locked) {
+      root.innerHTML = renderLock();
+    } else {
+      var body = ui.screen === 'journal' ? renderJournal() : ui.screen === 'urge' ? renderUrge() : ui.screen === 'urges' ? renderUrges()
+        : ui.screen === 'days' ? renderDays() : ui.screen === 'journey' ? renderJourney() : ui.screen === 'settings' ? renderSettings() : renderToday();
+      root.innerHTML = '<header class="top"><button type="button" class="menu-btn" aria-label="Open menu" data-a="openDrawer">' + I.menu + '</button>' +
+        '<span class="top-t">' + TITLES[ui.screen] + '</span><span class="top-d">' + fmt(localToday()) + '</span></header>' +
+        '<main id="main">' + body + '</main>' +
+        (ui.screen !== 'urge' ? '<button type="button" class="fab" data-a="startUrge">' + I.flame + 'Urge hit</button>' : '') +
+        renderDrawer() + '<div id="overlay">' + renderModal() + '</div>';
+      main = document.getElementById('main');
+      applyFilters();
+      var tas = main.querySelectorAll('textarea.nf-text');
+      for (var t = 0; t < tas.length; t++) autosize(tas[t]);
+      main.scrollTop = keep;
+    }
+    lastScreen = ui.screen + ui.jView;
+    lastLocked = ui.locked;
+  }
+
+  function commit() { clampMin(); purgeBlankNofap(); save(); render(); }
+
   function applyFilters() {
+    var main = document.getElementById('main');
+    if (!main) return;
     Object.keys(ui.q).forEach(function (key) {
       var list = main.querySelector('[data-list="' + key + '"]');
       if (!list) return;
-      var q = ui.q[key].trim().toLowerCase();
-      var shown = 0, rows = list.querySelectorAll('[data-name]');
-      for (var i = 0; i < rows.length; i++) {
-        var hit = !q || rows[i].getAttribute('data-name').indexOf(q) >= 0;
-        rows[i].hidden = !hit;
-        if (hit) shown++;
-      }
+      var q = ui.q[key].trim().toLowerCase(), shown = 0, rows = list.querySelectorAll('[data-name]');
+      for (var i = 0; i < rows.length; i++) { var hit = !q || rows[i].getAttribute('data-name').indexOf(q) >= 0; rows[i].hidden = !hit; if (hit) shown++; }
       var nm = main.querySelector('[data-nomatch="' + key + '"]');
       if (nm) { nm.hidden = !(q && rows.length && !shown); nm.querySelector('span').textContent = ui.q[key].trim(); }
       var x = main.querySelector('.search-x[data-key="' + key + '"]');
@@ -251,475 +796,272 @@
     });
   }
 
-  function nextInfo() {
-    var rewards = sortedRewards();
-    var next = rewards.find(function (r) { return r.daysRequired > S.counter; });
-    var prevDays = rewards.filter(function (r) { return r.daysRequired <= S.counter; })
-      .reduce(function (m, r) { return Math.max(m, r.daysRequired); }, 0);
-    return { rewards: rewards, next: next, prevDays: prevDays };
-  }
-
-  // ---------------------------------------------------------------- screens
-  function renderToday() {
-    var ev = evaluate(S.goals, S.doneToday, S.settings.minScore);
-    var min = S.settings.minScore;
-    var ni = nextInfo(), next = ni.next;
-    var real = localToday();
-    var p = parts(S.today);
-    var rel = S.today === real ? 'Today' : S.today < real ? 'Yesterday' : 'Tomorrow';
-
-    var nextPct = next ? Math.round((S.counter - ni.prevDays) / Math.max(1, next.daysRequired - ni.prevDays) * 100) : 100;
-    var away = next ? next.daysRequired - S.counter : 0;
-    var nextAway = next ? plural(away, 'day away', 'days away') + ' · day ' + next.daysRequired
-      : (S.rewards.length ? 'Route complete' : 'Add rewards in Setup');
-
-    var C = 238.76;
-    var pct = Math.min(1, ev.score / Math.max(1, min));
-    var ringColor = ev.score >= min ? '#1E6A50' : '#1D211C';
-
-    var st;
-    if (!S.goals.length) st = { bg: '#E9E4D8', fg: '#2F332D', t: 'No goals yet', b: 'Add a goal to start scoring your days.' };
-    else if (ev.missing.length) st = { bg: '#F6E2D3', fg: '#6A2806', t: 'Non-negotiable still open', b: ev.missing.join(', ') + ' — close the day without it and the counter resets to 0.' };
-    else if (ev.result === 'count') st = { bg: '#DDEBE3', fg: '#123F30', t: 'This day counts', b: 'Close it and your counter moves to ' + (S.counter + 1) + '.' };
-    else st = { bg: '#E9E4D8', fg: '#2F332D', t: plural(min - ev.score, 'point', 'points') + ' to the minimum', b: 'Below it nothing happens — the counter stays at ' + S.counter + '.' };
-
-    var doneCount = S.goals.filter(function (g) { return S.doneToday[g.id]; }).length;
-    var future = S.today > real;
-    var ringTxt = ev.score + '/' + min;
-
-    var goalsHtml = S.goals.map(function (g) {
-      var d = !!S.doneToday[g.id];
-      return '<button type="button" class="goal' + (d ? ' done' : '') + '" data-a="toggle" data-id="' + esc(g.id) + '" data-name="' + esc(g.name.toLowerCase()) + '" aria-pressed="' + d + '">' +
-        '<span class="box">' + (d ? I.check : '') + '</span>' +
-        '<span class="txt"><span class="name">' + esc(g.name) + '</span>' +
-        (g.nonNegotiable ? '<span class="tag">' + I.lock + 'Non-negotiable</span>' : '') + '</span>' +
-        '<span class="pts">+' + g.points + '</span></button>';
-    }).join('');
-
-    return '<div class="screen">' +
-      '<header><span class="kicker">' + rel + ' · ' + p.wdl + ' ' + p.day + ' ' + p.mon + '</span>' +
-      '<h1 class="h1">Daily check-in</h1></header>' +
-      '<section class="hero" aria-label="Successful days"><div class="hero-top">' +
-      '<div class="col" style="gap:4px"><span class="hero-label">Successful days</span><span class="hero-count">' + S.counter + '</span></div>' +
-      '<div class="hero-next"><span class="hero-label">Next station</span><span class="hero-next-name">' + esc(next ? next.name : 'All reached') + '</span>' +
-      '<span class="hero-next-away">' + esc(nextAway) + '</span></div></div>' +
-      '<div class="bar"><div style="width:' + nextPct + '%"></div></div></section>' +
-      '<section class="score" aria-label="Today\'s score" style="background:' + st.bg + '">' +
-      '<div class="ring"><svg width="92" height="92" viewBox="0 0 92 92" aria-hidden="true">' +
-      '<circle cx="46" cy="46" r="38" fill="none" stroke="#FFFDF8" stroke-width="9"/>' +
-      (pct > 0 ? '<circle class="prog" cx="46" cy="46" r="38" fill="none" stroke="' + ringColor + '" stroke-width="9" stroke-linecap="round" stroke-dasharray="' + (pct * C).toFixed(2) + ' ' + C + '" transform="rotate(-90 46 46)"/>' : '') + '</svg>' +
-      '<div class="ring-txt"><span class="ring-num' + (ringTxt.length > 5 ? ' small' : '') + '">' + ringTxt + '</span><span class="ring-sub">' + ev.total + ' possible</span></div></div>' +
-      '<div class="status" style="color:' + st.fg + '"><b>' + esc(st.t) + '</b><span>' + esc(st.b) + '</span></div></section>' +
-      '<div class="row-between" style="padding-top:4px"><div class="col"><h2 class="h2">Goals</h2>' +
-      '<span class="sub">' + doneCount + ' of ' + S.goals.length + ' done</span></div>' +
-      '<button type="button" class="pill-btn" data-a="addGoalFromToday">' + I.plus + 'Add goal</button></div>' +
-      (S.goals.length > 5 ? searchBox('today', 'Search goals') : '') +
-      '<div class="stack" data-list="today">' + (goalsHtml || '<div class="empty">No goals yet. Tap “Add goal” to create your first one.</div>') + '</div>' + noMatch('today') +
-      '<button type="button" class="big-btn" data-a="closeDay"' + (future ? ' disabled' : '') + '>Close ' + fmt(S.today) + '</button>' +
-      (future ? '<p class="hint">You can tick goals ahead, but ' + fmt(S.today) + ' can only be closed once it begins.</p>'
-        : S.today < real ? '<p class="hint">Yesterday is still open. Close it to start today.</p>' : '') +
-      '</div>';
-  }
-
-  function renderJourney() {
-    var rewards = sortedRewards();
-    var lastReset = -1;
-    S.history.forEach(function (h, i) { if (h.result === 'reset') lastReset = i; });
-    var runStart = lastReset >= 0 ? addDays(S.history[lastReset].date, 1) : (S.history.length ? S.history[0].date : S.today);
-    function reachedOn(days) {
-      for (var i = lastReset + 1; i < S.history.length; i++) {
-        var h = S.history[i];
-        if (h.result === 'count' && h.counterAfter === days) return h.date;
-      }
-      return null;
-    }
-    var list = [{ name: 'Start', daysRequired: 0, start: true }].concat(rewards);
-    var nextIdx = -1;
-    for (var k = 0; k < list.length; k++) if (list[k].daysRequired > S.counter) { nextIdx = k; break; }
-
-    var items = list.map(function (r, i) {
-      var reached = r.daysRequired <= S.counter;
-      var isNext = i === nextIdx;
-      var after = list[i + 1];
-      var fill = 0;
-      if (after) fill = Math.max(0, Math.min(100, (S.counter - r.daysRequired) / Math.max(1, after.daysRequired - r.daysRequired) * 100));
-      var here = !!after && S.counter > r.daysRequired && S.counter < after.daysRequired;
-      var meta;
-      if (r.start) meta = 'Run started ' + fmt(runStart);
-      else if (reached) { var d = reachedOn(r.daysRequired); meta = d ? 'Unlocked ' + fmt(d) : 'Unlocked'; }
-      else {
-        var away = r.daysRequired - S.counter;
-        meta = plural(away, 'day', 'days') + ' away · earliest ' + fmt(addDays(S.today, away - 1));
-      }
-      var cls = reached ? 'reached' : isNext ? 'next' : '';
-      return '<li><div class="rail"><span class="node ' + cls + '">' + (reached ? I.check : isNext ? '<span class="dot"></span>' : '') + '</span>' +
-        (after ? '<div class="seg"><div class="fill" style="height:' + fill.toFixed(1) + '%"></div>' +
-          (here ? '<span class="here" aria-label="You are here" style="top:' + fill.toFixed(1) + '%"></span>' : '') + '</div>' : '') +
-        '</div><div class="st-body"><div class="st-card ' + cls + '"><div class="row-between" style="align-items:baseline;gap:8px">' +
-        '<span class="st-name">' + esc(r.name) + '</span><span class="st-day">Day ' + r.daysRequired + '</span></div>' +
-        '<span class="st-meta">' + esc(meta) + '</span></div></div></li>';
-    }).join('');
-
-    return '<div class="screen wide-gap"><header><span class="kicker">Current run · day ' + S.counter + '</span>' +
-      '<h1 class="h1">Your route</h1><p class="lede">Every day at or above the minimum moves you one stop. A missed non-negotiable sends you back to the start.</p></header>' +
-      '<ol class="route">' + items + '</ol>' +
-      (rewards.length ? '' : '<div class="empty">No stations yet. Add rewards in Setup to build your route.</div>') + '</div>';
-  }
-
-  function renderHistory() {
-    var lastN = S.history.slice(-GRID_DAYS);
-    var offset = S.history.length - lastN.length;
-    var cells = '';
-    for (var i = 0; i < GRID_DAYS; i++) {
-      var h = lastN[i];
-      cells += h ? '<button type="button" class="' + h.result + (ui.openDate === offset + i ? ' sel' : '') + '" data-a="jumpDay" data-idx="' + (offset + i) + '" aria-label="' +
-        esc(fmt(h.date) + ' · ' + h.score + '/' + h.minScore) + '"></button>' : '<span></span>';
-    }
-    function cnt(r) { return lastN.filter(function (h) { return h.result === r; }).length; }
-
-    var list = S.history.map(function (h, idx) {
-      var p = parts(h.date);
-      var open = ui.openDate === idx;
-      var editing = open && ui.edit && ui.edit.idx === idx;
-      var pill = h.result === 'count' ? '+1 → ' + h.counterAfter : h.result === 'reset' ? 'Reset to 0' : 'No change';
-      var doneN = h.items.filter(function (it) { return it.done; }).length;
-      var shownItems = editing ? h.items.map(function (it, i) { return Object.assign({}, it, { done: ui.edit.done[i] }); }) : h.items;
-      var itemRows = shownItems.map(function (it, i) {
-        return '<li class="' + (it.done ? 'done' : 'missed') + (it.nonNegotiable ? ' must' : '') + (editing ? ' editable' : '') + '"' +
-          (editing ? ' role="button" tabindex="0" aria-pressed="' + it.done + '" data-a="editItem" data-i="' + i + '"' : '') + '>' +
-          '<span class="ic">' + (it.done ? I.checkSm : I.xSm) + '</span>' +
-          '<span class="nm">' + esc(it.goalName) + '</span>' + (it.nonNegotiable ? '<span class="mustlbl">Must</span>' : '') +
-          '<span class="pt">' + (it.done ? '+' + it.points : '0') + '</span></li>';
-      }).join('');
-      var items = '';
-      if (editing) {
-        var o = dayOutcome(shownItems, ui.edit.min);
-        var rLbl = o.result === 'count' ? 'Counts' : o.result === 'reset' ? 'Resets to 0' : 'No change';
-        items = '<ul>' + itemRows + '</ul><div class="day-edit">' +
-          '<div class="row-between"><div class="col"><span class="edit-lbl">Minimum for this day</span><span class="day-sub">Other days keep their own</span></div>' +
-          '<div class="stepper" style="gap:2px"><button type="button" class="sq light" aria-label="Lower this day\'s minimum" data-a="editMinDec"' + (ui.edit.min <= 1 ? ' disabled' : '') + '>' + I.minus + '</button>' +
-          '<span class="pts-val">' + ui.edit.min + '</span>' +
-          '<button type="button" class="sq light" aria-label="Raise this day\'s minimum" data-a="editMinInc"' + (ui.edit.min >= Math.max(1, o.total) ? ' disabled' : '') + '>' + I.plus + '</button></div></div>' +
-          '<div class="row-between edit-preview"><span class="day-score">' + o.score + '/' + ui.edit.min + '</span><span class="res ' + o.result + '">' + rLbl + '</span></div>' +
-          '<div class="btns"><button type="button" class="ghost" data-a="cancelEdit">Cancel</button><button type="button" data-a="saveEdit">Save day</button></div></div>';
-      } else if (open) {
-        items = '<ul>' + itemRows + '</ul><div class="day-edit"><button type="button" class="pill-btn edit-btn" data-a="editDay" data-idx="' + idx + '">' +
-          '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16v4zM13.5 6.5l4 4"/></svg>Edit this day</button></div>';
-      }
-      return '<div class="day' + (open ? ' open' : '') + '"><button type="button" class="day-head" data-a="openDay" data-idx="' + idx + '" aria-expanded="' + open + '">' +
-        '<span class="day-date"><small>' + p.wd + '</small><b>' + p.day + '</b></span>' +
-        '<span class="day-mid"><span class="day-score">' + h.score + '/' + h.minScore + '</span><span class="day-sub">' + p.mon + ' · ' + doneN + ' of ' + h.items.length + ' goals' + (h.edited ? '<span class="edited-tag">Edited</span>' : '') + '</span></span>' +
-        '<span class="res ' + h.result + '">' + pill + '</span>' + I.chev + '</button>' + items + '</div>';
-    }).reverse().join('');
-
-    return '<div class="screen"><header><span class="kicker">Last ' + (lastN.length || GRID_DAYS) + ' days</span><h1 class="h1">History</h1></header>' +
-      '<section class="panel" aria-label="Overview"><div class="grid">' + cells + '</div>' +
-      '<div class="legend"><span><i style="background:#1E6A50"></i>Counted · ' + cnt('count') + '</span>' +
-      '<span><i style="background:#D6D0C2"></i>No change · ' + cnt('hold') + '</span>' +
-      '<span><i style="background:#E9884E"></i>Reset · ' + cnt('reset') + '</span></div></section>' +
-      '<div class="stack">' + (list || '<div class="empty">No closed days yet. Close your first day on the Today tab and it will show up here.</div>') + '</div></div>';
-  }
-
-  function renderSetup() {
-    var total = totalPoints(S.goals);
-    var min = S.settings.minScore;
-    var goals = S.goals.map(function (g) {
-      return '<div class="edit-card" data-name="' + esc(g.name.toLowerCase()) + '"><div class="edit-row">' +
-        '<input class="field" type="text" aria-label="Goal name" maxlength="60" value="' + esc(g.name) + '" data-a="renameGoal" data-id="' + esc(g.id) + '">' +
-        '<button type="button" class="icon-btn" aria-label="Remove goal" data-a="removeGoal" data-id="' + esc(g.id) + '">' + I.trash + '</button></div>' +
-        '<div class="row-between" style="gap:8px"><div class="stepper" style="gap:2px">' +
-        '<button type="button" class="sq light" aria-label="Fewer points" data-a="ptsDec" data-id="' + esc(g.id) + '"' + (g.points <= 1 ? ' disabled' : '') + '>' + I.minus + '</button>' +
-        '<span class="pts-val">' + g.points + ' pts</span>' +
-        '<button type="button" class="sq light" aria-label="More points" data-a="ptsInc" data-id="' + esc(g.id) + '"' + (g.points >= 50 ? ' disabled' : '') + '>' + I.plus + '</button></div>' +
-        '<button type="button" class="switch-btn" aria-pressed="' + g.nonNegotiable + '" data-a="toggleMust" data-id="' + esc(g.id) + '">Non-negotiable<span class="switch"><i></i></span></button>' +
-        '</div></div>';
-    }).join('');
-    var rewards = S.rewards.map(function (r) {
-      return '<div class="edit-card" data-name="' + esc(r.name.toLowerCase()) + '" style="flex-direction:row;align-items:center;gap:8px;padding:10px 10px 10px 14px">' + I.gift +
-        '<input class="field" type="text" aria-label="Reward name" maxlength="60" value="' + esc(r.name) + '" data-a="renameReward" data-id="' + esc(r.id) + '">' +
-        '<label class="days-lbl"><input class="field num" type="number" inputmode="numeric" min="1" max="999" aria-label="Days required" value="' + r.daysRequired + '" data-a="setDays" data-id="' + esc(r.id) + '">days</label>' +
-        '<button type="button" class="icon-btn" aria-label="Remove reward" data-a="removeReward" data-id="' + esc(r.id) + '">' + I.trash + '</button></div>';
-    }).join('');
-
-    return '<div class="screen wide-gap"><header><span class="kicker">Everything is yours to change</span><h1 class="h1">Setup</h1></header>' +
-      '<section class="rules" aria-label="Rules"><div class="row-between"><div class="col" style="gap:3px">' +
-      '<span style="font-size:16px;font-weight:700">Daily minimum</span><span style="font-size:13px;color:#C9C5BA">out of ' + total + ' possible points</span></div>' +
-      '<div class="stepper"><button type="button" class="sq" aria-label="Lower minimum" data-a="minDec"' + (min <= 1 ? ' disabled' : '') + '>' + I.minus + '</button>' +
-      '<span class="min-val">' + min + '</span>' +
-      '<button type="button" class="sq" aria-label="Raise minimum" data-a="minInc"' + (min >= total ? ' disabled' : '') + '>' + I.plus + '</button></div></div>' +
-      '<p class="min-note">Applies from ' + fmt(S.today) + ' on. Closed days keep the minimum they had — edit a single day from History.</p>' +
-      '<ul><li>Reach the minimum → +1 successful day.</li><li>Below the minimum → nothing changes.</li><li>Miss a non-negotiable → counter resets to 0.</li></ul></section>' +
-      '<section class="stack" style="gap:10px" aria-labelledby="goals-h"><div class="row-between"><div class="col"><h2 id="goals-h" class="h2">Goals</h2>' +
-      '<span class="sub" style="font-weight:400">' + plural(S.goals.length, 'goal', 'goals') + ' · ' + total + ' pts</span></div>' +
-      '<button type="button" class="pill-btn solid" data-a="addGoal">' + I.plus + 'Add goal</button></div>' +
-      (S.goals.length ? searchBox('goals', 'Search goals') : '') + '<div class="stack" style="gap:10px" data-list="goals">' + goals + '</div>' + noMatch('goals') +
-      '<button type="button" class="dashed" data-a="addGoal">' + I.plus + 'Add goal</button></section>' +
-      '<section class="stack" style="gap:10px" aria-labelledby="rewards-h"><div class="row-between" style="align-items:baseline"><h2 id="rewards-h" class="h2">Rewards</h2>' +
-      '<span class="sub" style="font-weight:400">stations on your route</span></div>' +
-      (S.rewards.length ? searchBox('rewards', 'Search rewards') : '') + '<div class="stack" style="gap:10px" data-list="rewards">' + rewards + '</div>' + noMatch('rewards') +
-      '<button type="button" class="dashed" data-a="addReward">' + I.plus + 'Add reward</button></section>' +
-      '<p class="foot">Changes apply from the open day on. Closed days keep the goals as they were.<br>' +
-      '<button type="button" class="icon-btn" style="width:auto;padding:0 12px;margin:6px auto 0;font-size:12px;font-weight:600;text-decoration:underline" data-a="askReset">Erase all data</button></p>' +
-      '</div>';
-  }
-
-  function renderNofap() {
-    var sections = NOFAP_LISTS.map(function (l) {
-      var items = S.nofap[l.key];
-      var rows = items.map(function (it, i) {
-        return '<div class="nf-item"><span class="nf-num">' + (i + 1) + '</span>' +
-          '<textarea class="field nf-text" rows="1" maxlength="500" aria-label="' + esc(l.title) + ' item ' + (i + 1) + '" placeholder="Write it here…" data-a="nfEdit" data-list="' + l.key + '" data-id="' + esc(it.id) + '">' + esc(it.text) + '</textarea>' +
-          '<button type="button" class="icon-btn" aria-label="Delete item" data-a="nfRemove" data-list="' + l.key + '" data-id="' + esc(it.id) + '">' + I.trash + '</button></div>';
-      }).join('');
-      return '<section class="stack nf-sec" style="gap:10px" aria-labelledby="nf-' + l.key + '">' +
-        '<div class="col"><h2 id="nf-' + l.key + '" class="h2">' + l.title + '</h2><span class="sub" style="font-weight:400" data-nfcount="' + l.key + '">' + nfCountText(l) + '</span></div>' + rows +
-        '<button type="button" class="dashed" data-a="nfAdd" data-list="' + l.key + '">' + I.plus + l.add + '</button></section>';
-    }).join('');
-    return '<div class="screen wide-gap"><header><span class="kicker">Your plan</span><h1 class="h1">NoFap</h1></header>' + sections + '</div>';
-  }
-
-  function nfCountText(l) {
-    var n = S.nofap[l.key].length;
-    return (n ? plural(n, 'item', 'items') + ' · ' : '') + l.hint;
-  }
-
-  function nfFind(list, id) { return S.nofap[list].find(function (x) { return x.id === id; }); }
-
-  function autosize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
-
-  function renderNav() {
-    var tabs = [['today', 'Today', I.tToday], ['journey', 'Journey', I.tJourney], ['history', 'History', I.tHistory], ['nofap', 'NoFap', I.tNofap], ['setup', 'Setup', I.tSetup]];
-    return tabs.map(function (t) {
-      return '<button type="button" data-a="tab" data-tab="' + t[0] + '"' + (ui.tab === t[0] ? ' aria-current="page"' : '') + '>' +
-        '<span class="pad">' + t[2] + '</span>' + t[1] + '</button>';
-    }).join('');
-  }
-
-  function renderSheet() {
-    var s = ui.sheet;
-    if (!s) return '';
-    var btns = s.kind === 'confirm'
-      ? '<button type="button" class="ghost" data-a="dismiss">Cancel</button><button type="button" class="danger" data-a="confirm">' + esc(s.ok) + '</button>'
-      : '<button type="button" data-a="dismiss">' + esc(s.ok) + '</button>';
-    return '<div class="scrim" data-a="scrim"><div class="sheet' + (s.reward ? ' reward' : '') + '" role="dialog" aria-modal="true" aria-labelledby="sheet-title">' +
-      '<span class="k" style="color:' + s.color + '">' + esc(s.kicker) + '</span>' +
-      '<h2 id="sheet-title">' + esc(s.title) + '</h2><p>' + esc(s.body) + '</p>' +
-      '<div class="btns">' + btns + '</div></div></div>';
-  }
-
-  var main = document.getElementById('main');
-  var nav = document.getElementById('nav');
-  var overlay = document.getElementById('overlay');
-  var lastTab = null;
-
-  // Blank NoFap items are dropped on the next render, except the one just added.
   function purgeBlankNofap() {
-    NOFAP_LISTS.forEach(function (l) {
-      S.nofap[l.key] = S.nofap[l.key].filter(function (x) { return x.text.trim() || x.id === ui.nfNew; });
-    });
+    NOFAP_LISTS.forEach(function (l) { S.nofap[l.key] = S.nofap[l.key].filter(function (x) { return x.text.trim() || x.id === ui.nfNew; }); });
   }
-
-  function render() {
-    purgeBlankNofap();
-    var keepScroll = lastTab === ui.tab ? main.scrollTop : 0;
-    var html = ui.tab === 'journey' ? renderJourney() : ui.tab === 'history' ? renderHistory()
-      : ui.tab === 'setup' ? renderSetup() : ui.tab === 'nofap' ? renderNofap() : renderToday();
-    main.innerHTML = html;
-    applyFilters();
-    var tas = main.querySelectorAll('textarea.nf-text');
-    for (var t = 0; t < tas.length; t++) autosize(tas[t]);
-    main.scrollTop = keepScroll;
-    lastTab = ui.tab;
-    nav.innerHTML = renderNav();
-    overlay.innerHTML = renderSheet();
-  }
-
-  function commit() { clampMin(); purgeBlankNofap(); save(); render(); }
+  function autosize(el) { el.style.height = 'auto'; el.style.height = el.scrollHeight + 'px'; }
 
   // ---------------------------------------------------------------- actions
   function findGoal(id) { return S.goals.find(function (g) { return g.id === id; }); }
   function findReward(id) { return S.rewards.find(function (r) { return r.id === id; }); }
-
-  function addGoal(focus) {
-    var g = { id: uid('g'), name: 'New goal', points: 2, nonNegotiable: false };
-    ui.q.goals = '';
-    S.goals.unshift(g);
-    ui.tab = 'setup';
-    lastTab = null;
-    commit();
-    if (focus) {
-      var el = main.querySelector('input[data-id="' + g.id + '"]');
-      if (el) { el.focus(); el.select(); }
-    }
+  function findAction(id) { return S.actions.find(function (a) { return a.id === id; }); }
+  function findUrge(id) { return S.urges.find(function (u) { return u.id === id; }); }
+  function nfFind(list, id) { return S.nofap[list].find(function (x) { return x.id === id; }); }
+  function go(screen) {
+    ui.screen = screen; ui.drawer = false; ui.edit = null; ui.nfNew = null;
+    if (screen === 'journal') { ui.jView = 'list'; ui.jConfirmDelete = false; }
+    render();
   }
+  function focusField(sel) {
+    var el = document.querySelector(sel);
+    if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); if (el.select) el.select(); }
+  }
+  function openDayIdx(idx) {
+    var h = S.history[idx];
+    if (!h) return;
+    ui.modal = h.result === 'reset' ? { type: 'relapse', idx: idx, draft: h.relapseReason || '', isNew: false } : { type: 'day', idx: idx };
+    render();
+  }
+  function setNofapRelapse(date) { if (!S.nofapSince || date > S.nofapSince) S.nofapSince = date; }
 
   function doCloseDay() {
     if (S.today > localToday()) return;
-    var ev = closeOpenDay();
-    var counter = S.counter;
+    var ev = closeOpenDay(), counter = S.counter, idx = S.history.length - 1, min = S.history[idx].minScore;
+    ui.histOpen = null; ui.edit = null;
+    if (ev.result === 'reset') {
+      ui.modal = { type: 'relapse', idx: idx, draft: '', isNew: true };
+      return commit();
+    }
     var rewards = sortedRewards();
     var hit = ev.result === 'count' ? rewards.filter(function (r) { return r.daysRequired === counter; }) : [];
     var next = rewards.find(function (r) { return r.daysRequired > counter; });
-    var nextLine = next ? (next.daysRequired - counter) + ' to go until ' + next.name + '.'
-      : rewards.length ? 'Every station on your route is reached.' : '';
-    var min = S.history[S.history.length - 1].minScore;
-    var sheet;
-    if (hit.length) {
-      sheet = { kicker: 'Station reached · day ' + counter, title: hit.map(function (r) { return r.name; }).join(' + '), reward: true,
-        body: 'You hit your minimum ' + counter + ' times on this run. This one is yours. ' + nextLine, color: '#B34A12' };
-    } else if (ev.result === 'count') {
-      sheet = { kicker: 'Day counted · ' + ev.score + '/' + min, title: plural(counter, 'successful day', 'successful days'), body: nextLine, color: '#1E6A50' };
-    } else if (ev.result === 'reset') {
-      sheet = { kicker: 'Counter reset', title: 'Back to day 0', body: 'Missed non-negotiable: ' + ev.missing.join(', ') + '. Your route starts again.', color: '#7A2F08' };
-    } else {
-      sheet = { kicker: 'No change · ' + ev.score + '/' + min, title: 'Still at ' + plural(counter, 'day', 'days'),
-        body: 'Under the minimum, but every non-negotiable was kept, so nothing is lost.', color: '#3F433C' };
-    }
-    sheet.kind = 'info';
-    sheet.ok = 'Start ' + fmt(S.today);
-    ui.sheet = sheet;
-    ui.openDate = null;
-    ui.edit = null;
+    var nextLine = next ? (next.daysRequired - counter) + ' to go until ' + next.name + '.' : rewards.length ? 'Every reward on your journey is reached.' : '';
+    var m;
+    if (hit.length) m = { kicker: 'Reward unlocked · day ' + counter, title: hit.map(function (r) { return r.name; }).join(' + '), reward: true, body: 'You reached your minimum ' + counter + ' times in this run. Go enjoy it. ' + nextLine, color: '#B34A12' };
+    else if (ev.result === 'count') m = { kicker: 'Day counted · ' + ev.score + '/' + min, title: plural(counter, 'successful day', 'successful days'), body: nextLine, color: '#1E6A50' };
+    else m = { kicker: 'No change · ' + ev.score + '/' + min, title: 'Still at ' + plural(counter, 'day', 'days'), body: 'Under the minimum, but you kept every non-negotiable, so nothing is lost.', color: '#3F433C' };
+    m.type = 'info'; m.ok = 'Start ' + fmt(S.today);
+    ui.modal = m;
     commit();
   }
 
-  var actions = {
-    tab: function (el) { ui.tab = el.getAttribute('data-tab'); ui.edit = null; ui.nfNew = null; render(); },
-    toggle: function (el) { var id = el.getAttribute('data-id'); S.doneToday[id] = !S.doneToday[id]; if (!S.doneToday[id]) delete S.doneToday[id]; commit(); },
-    addGoalFromToday: function () { addGoal(true); },
-    addGoal: function () { addGoal(true); },
+  function startEdit(idx) {
+    var h = S.history[idx];
+    if (!h) return;
+    ui.edit = { idx: idx, done: h.items.map(function (it) { return !!it.done; }), min: h.minScore };
+    ui.histOpen = idx;
+    var pos = S.history.length - 1 - idx;
+    if (pos >= ui.histLimit) ui.histLimit = Math.ceil((pos + 1) / PAGE) * PAGE;
+  }
+
+  var A = {
+    // lock
+    pinKey: function (el) { pinKey(el.getAttribute('data-k')); },
+    pinCancel: function () { ui.pin = ''; ui.pinErr = false; ui.pinMode = 'unlock'; ui.pinFirst = ''; ui.locked = false; setBars(); render(); },
+    lockNow: lockNow,
+    changeCode: function () { ui.locked = true; ui.pin = ''; ui.pinErr = false; ui.pinMode = 'new'; ui.pinFirst = ''; setBars(); render(); },
+    // chrome
+    openDrawer: function () { ui.drawer = true; render(); },
+    closeDrawer: function () { ui.drawer = false; render(); },
+    go: function (el) { go(el.getAttribute('data-to')); },
+    startUrge: function () { ui.ud = freshUrge(); go('urge'); },
+    closeModal: function () {
+      var m = ui.modal;
+      ui.modal = null;
+      if (m && m.ok && m.ok.indexOf('Start ') === 0) ui.screen = 'today';
+      render();
+    },
+    scrim: function (el, ev) { if (ev.target === el && ui.modal && ui.modal.type !== 'relapse') A.closeModal(); },
+    askYes: function () { var m = ui.modal; ui.modal = null; if (m && m.run) m.run(); commit(); },
+    // today
+    toggle: function (el) { var id = el.getAttribute('data-id'); if (S.doneToday[id]) delete S.doneToday[id]; else S.doneToday[id] = true; commit(); },
+    askClose: function () { if (S.today <= localToday()) { ui.modal = { type: 'confirm' }; render(); } },
     closeDay: doCloseDay,
-    openDay: function (el) {
-      var i = Number(el.getAttribute('data-idx'));
-      if (ui.edit && ui.edit.idx !== i) ui.edit = null;
-      ui.openDate = ui.openDate === i ? null : i;
-      if (ui.openDate === null) ui.edit = null;
-      render();
+    calPrev: function () {
+      var q = (ui.calMonth || localToday().slice(0, 7)).split('-').map(Number), d = new Date(Date.UTC(q[0], q[1] - 2, 1));
+      ui.calMonth = d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1); render();
     },
-    nfAdd: function (el) {
-      var list = el.getAttribute('data-list');
-      var item = { id: uid('n'), text: '' };
-      ui.nfNew = item.id;
-      S.nofap[list].push(item);
+    calNext: function () {
+      var q = (ui.calMonth || localToday().slice(0, 7)).split('-').map(Number), d = new Date(Date.UTC(q[0], q[1], 1));
+      var nm = d.getUTCFullYear() + '-' + pad(d.getUTCMonth() + 1);
+      if (nm <= localToday().slice(0, 7)) { ui.calMonth = nm; render(); }
+    },
+    calDay: function (el) { openDayIdx(Number(el.getAttribute('data-idx'))); },
+    saveDraft: function () {
+      var t = ui.journalDraft.trim();
+      if (!t) return;
+      S.journal.push({ id: uid('j'), date: localToday(), time: nowTime(), text: t });
+      ui.journalDraft = '';
       commit();
-      var ta = main.querySelector('textarea[data-id="' + item.id + '"]');
-      if (ta) { ta.scrollIntoView({ block: 'center' }); ta.focus(); }
     },
-    nfRemove: function (el) {
-      var list = el.getAttribute('data-list'), it = nfFind(list, el.getAttribute('data-id'));
-      if (!it) return;
-      var drop = function () { S.nofap[list] = S.nofap[list].filter(function (x) { return x.id !== it.id; }); };
-      if (!it.text.trim()) { drop(); commit(); return; }
-      ui.nfNew = null;
-      ui.sheet = { kind: 'confirm', kicker: 'Delete item', title: it.text.length > 60 ? it.text.slice(0, 57) + '…' : it.text, color: '#7A2F08', ok: 'Delete',
-        body: 'It will be removed from ' + NOFAP_LISTS.filter(function (l) { return l.key === list; })[0].title.toLowerCase() + '.', run: drop };
-      render();
+    // relapse modal
+    relOpen: function (el) { openDayIdx(Number(el.getAttribute('data-idx'))); },
+    relSave: function () { var m = ui.modal, h = S.history[m.idx]; if (h) h.relapseReason = (m.draft || '').trim(); ui.modal = null; commit(); },
+    relDelete: function () { var m = ui.modal, h = S.history[m.idx]; if (h) h.relapseReason = ''; ui.modal = null; commit(); },
+    dayEditFromModal: function (el) { var idx = Number(el.getAttribute('data-idx')); ui.modal = null; ui.screen = 'days'; startEdit(idx); render(); },
+    // journal
+    openEntry: function (el) { ui.jId = el.getAttribute('data-id'); ui.jView = 'read'; ui.jConfirmDelete = false; ui.screen = 'journal'; ui.drawer = false; render(); },
+    jNew: function () { ui.jId = null; ui.jText = ''; ui.jView = 'edit'; render(); focusField('#j-edit'); },
+    jBack: function () { ui.jView = 'list'; ui.jConfirmDelete = false; render(); },
+    jEdit: function () { var e = S.journal.find(function (x) { return x.id === ui.jId; }); ui.jText = e ? e.text : ''; ui.jView = 'edit'; render(); },
+    jCancel: function () { ui.jView = ui.jId ? 'read' : 'list'; render(); },
+    jSave: function () {
+      var t = ui.jText.trim();
+      if (!t) { ui.jView = ui.jId ? 'read' : 'list'; return render(); }
+      var e = S.journal.find(function (x) { return x.id === ui.jId; });
+      if (e) e.text = t;
+      else { e = { id: uid('j'), date: localToday(), time: nowTime(), text: t }; S.journal.push(e); ui.jId = e.id; }
+      ui.jView = 'read'; commit();
     },
-    jumpDay: function (el) {
+    jDelete: function () {
+      if (!ui.jConfirmDelete) { ui.jConfirmDelete = true; return render(); }
+      S.journal = S.journal.filter(function (x) { return x.id !== ui.jId; });
+      ui.jId = null; ui.jView = 'list'; ui.jConfirmDelete = false; commit();
+    },
+    // urge flow
+    udInt: function (el) { ui.ud.intensity = Number(el.getAttribute('data-v')); render(); },
+    udTag: function (el) { var k = el.getAttribute('data-key'); ui.ud[k] = toggleIn(ui.ud[k], el.getAttribute('data-v')); render(); },
+    udSuggest: function () { if (!ui.ud.intensity) return; ui.ud.suggested = suggest(ui.ud.triggers.concat(ui.ud.moods), ui.ud.intensity); ui.ud.step = 2; document.getElementById('main').scrollTop = 0; render(); },
+    udDid: function (el) { ui.ud.did = toggleIn(ui.ud.did, el.getAttribute('data-id')); render(); },
+    udOut: function (el) { var v = el.getAttribute('data-v'); ui.ud.outcome = ui.ud.outcome === v ? '' : v; render(); },
+    udBack: function () { ui.ud.step = 1; render(); },
+    udSave: function () {
+      var u = ui.ud, rec = { id: uid('u'), date: localToday(), time: nowTime(), intensity: u.intensity, triggers: u.triggers, moods: u.moods, note: u.note.trim(),
+        suggestedActionIds: u.suggested, didActionIds: u.did, outcome: u.outcome };
+      S.urges.push(rec);
+      if (rec.outcome === 'relapsed') setNofapRelapse(rec.date);
+      ui.ud = freshUrge(); ui.urgeOpen = rec.id; ui.urgeConfirmDelete = null;
+      ui.screen = 'urges';
+      commit();
+    },
+    // urges log
+    uToggle: function (el) { var id = el.getAttribute('data-id'); ui.urgeOpen = ui.urgeOpen === id ? null : id; ui.urgeConfirmDelete = null; render(); },
+    uDid: function (el) { var u = findUrge(el.getAttribute('data-id')); if (u) { u.didActionIds = toggleIn(u.didActionIds || [], el.getAttribute('data-act')); commit(); } },
+    uOut: function (el) {
+      var u = findUrge(el.getAttribute('data-id')), v = el.getAttribute('data-v');
+      if (!u) return;
+      u.outcome = u.outcome === v ? '' : v;
+      if (u.outcome === 'relapsed') setNofapRelapse(u.date);
+      commit();
+    },
+    uDelete: function (el) {
+      var id = el.getAttribute('data-id');
+      if (ui.urgeConfirmDelete !== id) { ui.urgeConfirmDelete = id; return render(); }
+      S.urges = S.urges.filter(function (u) { return u.id !== id; }); ui.urgeOpen = null; ui.urgeConfirmDelete = null; commit();
+    },
+    // days
+    dayToggle: function (el) {
       var i = Number(el.getAttribute('data-idx'));
       if (ui.edit && ui.edit.idx !== i) ui.edit = null;
-      ui.openDate = i;
-      render();
-      var head = main.querySelector('.day-head[data-idx="' + i + '"]');
-      if (head) head.parentNode.scrollIntoView({ behavior: 'smooth', block: 'start' });
-    },
-    editDay: function (el) {
-      var h = S.history[Number(el.getAttribute('data-idx'))];
-      if (!h) return;
-      ui.edit = { idx: Number(el.getAttribute('data-idx')), done: h.items.map(function (it) { return !!it.done; }), min: h.minScore };
+      ui.histOpen = ui.histOpen === i ? null : i;
+      if (ui.histOpen === null) ui.edit = null;
       render();
     },
+    histMore: function () { ui.histLimit += PAGE; render(); },
+    editDay: function (el) { startEdit(Number(el.getAttribute('data-idx'))); render(); },
     editItem: function (el) { var i = Number(el.getAttribute('data-i')); ui.edit.done[i] = !ui.edit.done[i]; render(); },
     editMinDec: function () { ui.edit.min = Math.max(1, ui.edit.min - 1); render(); },
-    editMinInc: function () {
-      var t = S.history[ui.edit.idx].items.reduce(function (a, it) { return a + it.points; }, 0);
-      ui.edit.min = Math.min(Math.max(1, t), ui.edit.min + 1); render();
-    },
+    editMinInc: function () { var t = S.history[ui.edit.idx].items.reduce(function (a, it) { return a + it.points; }, 0); ui.edit.min = Math.min(Math.max(1, t), ui.edit.min + 1); render(); },
     cancelEdit: function () { ui.edit = null; render(); },
     saveEdit: function () {
       var e = ui.edit, h = S.history[e.idx];
-      if (!h) { ui.edit = null; render(); return; }
+      if (!h) { ui.edit = null; return render(); }
       var before = S.counter, beforeResult = h.result;
       h.items.forEach(function (it, i) { it.done = e.done[i]; });
-      h.minScore = e.min;
-      h.edited = true;
+      h.minScore = e.min; h.edited = true;
       replayHistory();
       ui.edit = null;
-      var name = { count: 'counted', hold: 'no change', reset: 'reset' };
-      ui.sheet = { kind: 'info', kicker: 'Day updated · ' + fmt(h.date), color: '#1E6A50', ok: 'Done',
+      var name = { count: 'counted', hold: 'no change', reset: 'relapse' };
+      ui.modal = { type: 'info', kicker: 'Day updated · ' + fmt(h.date), color: '#1E6A50', ok: 'Done',
         title: before === S.counter ? 'Still at ' + plural(S.counter, 'day', 'days') : plural(before, 'day', 'days') + ' → ' + S.counter,
-        body: 'This day is now ' + h.score + '/' + h.minScore + ' (' + name[h.result] + (beforeResult !== h.result ? ', was ' + name[beforeResult] : '') + '). ' +
-          'Every later day was recounted with its own minimum.' };
+        body: 'This day is now ' + h.score + '/' + h.minScore + ' (' + name[h.result] + (beforeResult !== h.result ? ', was ' + name[beforeResult] : '') + '). Every later day was recounted with its own minimum.' };
       commit();
     },
-    clearSearch: function (el) {
-      var key = el.getAttribute('data-key');
-      ui.q[key] = '';
-      var input = main.querySelector('[data-search="' + key + '"]');
-      if (input) input.value = '';
-      applyFilters();
-    },
+    // settings
     minDec: function () { S.settings.minScore = Math.max(1, S.settings.minScore - 1); commit(); },
     minInc: function () { S.settings.minScore = Math.min(totalPoints(S.goals), S.settings.minScore + 1); commit(); },
+    addGoal: function () { var g = { id: uid('g'), name: 'New task', points: 2, nonNegotiable: false }; S.goals.unshift(g); ui.q.goals = ''; commit(); focusField('input[data-id="' + g.id + '"]'); },
     ptsDec: function (el) { var g = findGoal(el.getAttribute('data-id')); if (g) { g.points = Math.max(1, g.points - 1); commit(); } },
     ptsInc: function (el) { var g = findGoal(el.getAttribute('data-id')); if (g) { g.points = Math.min(50, g.points + 1); commit(); } },
     toggleMust: function (el) { var g = findGoal(el.getAttribute('data-id')); if (g) { g.nonNegotiable = !g.nonNegotiable; commit(); } },
     removeGoal: function (el) {
       var g = findGoal(el.getAttribute('data-id'));
       if (!g) return;
-      ui.sheet = { kind: 'confirm', kicker: 'Delete goal', title: g.name, color: '#7A2F08', ok: 'Delete',
-        body: 'It disappears from today and from future days. Closed days in History keep it.',
+      ui.modal = { type: 'ask', kicker: 'Delete task', title: g.name, color: '#7A2F08', ok: 'Delete', body: 'It disappears from today and from future days. Closed days keep it.',
         run: function () { S.goals = S.goals.filter(function (x) { return x.id !== g.id; }); delete S.doneToday[g.id]; } };
       render();
     },
     addReward: function () {
       var maxDays = S.rewards.reduce(function (m, r) { return Math.max(m, r.daysRequired); }, 0);
-      var r = { id: uid('r'), name: 'New reward', daysRequired: Math.min(999, maxDays + 10) };
-      ui.q.rewards = '';
-      S.rewards.push(r);
-      commit();
-      var el = main.querySelector('input[data-a="renameReward"][data-id="' + r.id + '"]');
-      if (el) { el.scrollIntoView({ block: 'center' }); el.focus(); el.select(); }
+      var r = { id: uid('r'), name: 'New reward', daysRequired: Math.min(9999, maxDays + 10) };
+      S.rewards.unshift(r); ui.q.rewards = ''; commit(); focusField('input[data-a="renameReward"][data-id="' + r.id + '"]');
     },
     removeReward: function (el) {
       var r = findReward(el.getAttribute('data-id'));
       if (!r) return;
-      ui.sheet = { kind: 'confirm', kicker: 'Delete reward', title: r.name, color: '#7A2F08', ok: 'Delete',
-        body: 'This station is removed from your route.',
+      ui.modal = { type: 'ask', kicker: 'Delete reward', title: r.name, color: '#7A2F08', ok: 'Delete', body: 'This reward is removed from your journey.',
         run: function () { S.rewards = S.rewards.filter(function (x) { return x.id !== r.id; }); } };
       render();
     },
-    askReset: function () {
-      ui.sheet = { kind: 'confirm', kicker: 'Erase all data', title: 'Start over?', color: '#7A2F08', ok: 'Erase',
-        body: 'Goals, rewards, your counter, the whole history and your NoFap lists are deleted from this phone. This cannot be undone.',
-        run: function () { S = defaultState(); ui.openDate = null; ui.edit = null; ui.tab = 'today'; } };
+    addAction: function () { var a = { id: uid('a'), name: 'New action', tags: [] }; S.actions.unshift(a); ui.actionOpen = a.id; commit(); focusField('input[data-a="renameAction"][data-id="' + a.id + '"]'); },
+    actionTags: function (el) { var id = el.getAttribute('data-id'); ui.actionOpen = ui.actionOpen === id ? null : id; render(); },
+    actionTag: function (el) { var a = findAction(el.getAttribute('data-id')); if (a) { a.tags = toggleIn(a.tags, el.getAttribute('data-v')); commit(); } },
+    removeAction: function (el) {
+      var a = findAction(el.getAttribute('data-id'));
+      if (!a) return;
+      ui.modal = { type: 'ask', kicker: 'Delete action', title: a.name, color: '#7A2F08', ok: 'Delete', body: 'It will no longer be suggested when an urge hits. Past urges keep their history.',
+        run: function () { S.actions = S.actions.filter(function (x) { return x.id !== a.id; }); } };
       render();
     },
-    dismiss: function () { var wasClose = ui.sheet && ui.sheet.ok && ui.sheet.ok.indexOf('Start ') === 0; ui.sheet = null; if (wasClose) ui.tab = 'today'; render(); },
-    confirm: function () { var s = ui.sheet; ui.sheet = null; if (s && s.run) s.run(); commit(); },
-    scrim: function (el, ev) { if (ev.target === el) actions.dismiss(); }
+    nfAdd: function (el) {
+      var list = el.getAttribute('data-list'), item = { id: uid('n'), text: '' };
+      ui.nfNew = item.id; S.nofap[list].push(item); commit(); focusField('textarea[data-id="' + item.id + '"]');
+    },
+    nfRemove: function (el) {
+      var list = el.getAttribute('data-list'), it = nfFind(list, el.getAttribute('data-id'));
+      if (!it) return;
+      var drop = function () { S.nofap[list] = S.nofap[list].filter(function (x) { return x.id !== it.id; }); };
+      if (!it.text.trim()) { drop(); return commit(); }
+      ui.nfNew = null;
+      ui.modal = { type: 'ask', kicker: 'Delete item', title: it.text.length > 60 ? it.text.slice(0, 57) + '…' : it.text, color: '#7A2F08', ok: 'Delete',
+        body: 'It will be removed from ' + NOFAP_LISTS.filter(function (l) { return l.key === list; })[0].title.toLowerCase() + '.', run: drop };
+      render();
+    },
+    clearSearch: function (el) {
+      var key = el.getAttribute('data-key'), input = document.querySelector('[data-search="' + key + '"]');
+      ui.q[key] = ''; if (input) input.value = ''; applyFilters();
+    },
+    askReset: function () {
+      ui.modal = { type: 'ask', kicker: 'Erase all data', title: 'Start over?', color: '#7A2F08', ok: 'Erase',
+        body: 'Tasks, rewards, days, journal, urges and NoFap settings are deleted from this phone. Your lock code stays. This cannot be undone.',
+        run: function () { var sec = S.security; S = defaultState(); S.security = sec; ui.histOpen = null; ui.edit = null; ui.screen = 'today'; } };
+      render();
+    }
   };
 
   document.addEventListener('click', function (ev) {
     var el = ev.target.closest('[data-a]');
-    if (!el || el.tagName === 'INPUT') return;
-    var fn = actions[el.getAttribute('data-a')];
+    if (!el || el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return;
+    var fn = A[el.getAttribute('data-a')];
     if (fn) fn(el, ev);
   });
 
-  // Text edits update state silently so the element under the user's finger
-  // is not replaced mid-tap; other views re-read state when they render.
+  // Text fields update state without re-rendering, so focus and the tap that
+  // follows are never lost; everything else re-reads state when it renders.
   document.addEventListener('input', function (ev) {
     var el = ev.target, a = el.getAttribute('data-a'), id = el.getAttribute('data-id');
     var sk = el.getAttribute('data-search');
     if (sk) { ui.q[sk] = el.value; applyFilters(); return; }
-    if (a === 'renameGoal' || a === 'renameReward') {
-      var card = el.closest('[data-name]');
-      if (card) card.setAttribute('data-name', el.value.toLowerCase());
-    }
+    if (a === 'renameGoal' || a === 'renameReward') { var card = el.closest('[data-name]'); if (card) card.setAttribute('data-name', el.value.toLowerCase()); }
     if (a === 'renameGoal') { var g = findGoal(id); if (g) { g.name = el.value; save(); } }
-    if (a === 'renameReward') { var r = findReward(id); if (r) { r.name = el.value; save(); } }
-    if (a === 'nfEdit') { var n = nfFind(el.getAttribute('data-list'), id); if (n) { n.text = el.value; save(); } autosize(el); }
+    else if (a === 'renameReward') { var r = findReward(id); if (r) { r.name = el.value; save(); } }
+    else if (a === 'renameAction') { var ac = findAction(id); if (ac) { ac.name = el.value; save(); } }
+    else if (a === 'nfEdit') { var n = nfFind(el.getAttribute('data-list'), id); if (n) { n.text = el.value; save(); } autosize(el); }
+    else if (a === 'journalDraft') { ui.journalDraft = el.value; var b = document.querySelector('[data-a="saveDraft"]'); if (b) b.disabled = !el.value.trim(); }
+    else if (a === 'jText') ui.jText = el.value;
+    else if (a === 'udNote') ui.ud.note = el.value;
+    else if (a === 'relDraft') { if (ui.modal) ui.modal.draft = el.value; }
+    else if (a === 'uNote') { var u = findUrge(id); if (u) { u.note = el.value; save(); } }
   });
   document.addEventListener('focusout', function (ev) {
     var el = ev.target;
@@ -730,51 +1072,72 @@
   });
   document.addEventListener('change', function (ev) {
     var el = ev.target, a = el.getAttribute('data-a'), id = el.getAttribute('data-id');
-    if (a === 'renameGoal' || a === 'renameReward') {
-      var item = a === 'renameGoal' ? findGoal(id) : findReward(id);
-      if (item && !item.name.trim()) { item.name = a === 'renameGoal' ? 'Untitled goal' : 'Untitled reward'; el.value = item.name; }
+    if (a === 'renameGoal' || a === 'renameReward' || a === 'renameAction') {
+      var item = a === 'renameGoal' ? findGoal(id) : a === 'renameReward' ? findReward(id) : findAction(id);
+      if (item && !item.name.trim()) { item.name = a === 'renameGoal' ? 'Untitled task' : a === 'renameReward' ? 'Untitled reward' : 'Untitled action'; el.value = item.name; }
       save();
     }
     if (a === 'setDays') {
       var r = findReward(id);
       if (!r) return;
       var v = parseInt(el.value, 10);
-      r.daysRequired = isNaN(v) ? r.daysRequired : Math.max(1, Math.min(999, v));
-      el.value = r.daysRequired;
-      save();
+      r.daysRequired = isNaN(v) ? r.daysRequired : Math.max(1, Math.min(9999, v));
+      el.value = r.daysRequired; save();
+    }
+    if (a === 'nofapSince' && el.value) {
+      var t = localToday();
+      S.nofapSince = el.value > t ? t : el.value;
+      el.value = S.nofapSince;
+      commit();
     }
   });
   document.addEventListener('keydown', function (ev) {
-    if (ev.key === 'Enter' && (ev.target.tagName === 'INPUT' || ev.target.tagName === 'TEXTAREA')) { ev.preventDefault(); ev.target.blur(); }
-    if ((ev.key === 'Enter' || ev.key === ' ') && ev.target.getAttribute('data-a') === 'editItem') { ev.preventDefault(); ev.target.click(); }
+    var t = ev.target;
+    if (ui.locked) {
+      if (/^[0-9]$/.test(ev.key)) { pinKey(ev.key); ev.preventDefault(); return; }
+      if (ev.key === 'Backspace') { pinKey('back'); ev.preventDefault(); return; }
+    }
+    if (ev.key === 'Enter' && t.tagName === 'INPUT') t.blur();
+    if (ev.key === 'Enter' && t.getAttribute && t.getAttribute('data-a') === 'nfEdit') { ev.preventDefault(); t.blur(); }
+    if ((ev.key === 'Enter' || ev.key === ' ') && t.getAttribute && t.getAttribute('data-a') === 'editItem') { ev.preventDefault(); t.click(); }
   });
 
   // Called by the Android shell for the system back gesture. Returns true when handled.
   window.stationsBack = function () {
-    if (ui.sheet) { actions.dismiss(); return true; }
+    if (ui.locked) {
+      if (ui.pinMode !== 'unlock') { A.pinCancel(); return true; }
+      return false;
+    }
+    if (ui.modal) { A.closeModal(); return true; }
+    if (ui.drawer) { ui.drawer = false; render(); return true; }
+    var ae = document.activeElement;
+    if (ae && /^(INPUT|TEXTAREA)$/.test(ae.tagName)) { ae.blur(); return true; }
     if (ui.edit) { ui.edit = null; render(); return true; }
-    if (document.activeElement && /^(INPUT|TEXTAREA)$/.test(document.activeElement.tagName)) { document.activeElement.blur(); return true; }
-    if (ui.tab !== 'today') { ui.tab = 'today'; render(); return true; }
+    if (ui.screen === 'journal' && ui.jView !== 'list') { ui.jView = ui.jView === 'edit' && ui.jId ? 'read' : 'list'; ui.jConfirmDelete = false; render(); return true; }
+    if (ui.screen === 'urge' && ui.ud.step === 2) { ui.ud.step = 1; render(); return true; }
+    if (ui.screen !== 'today') { go('today'); return true; }
     return false;
   };
 
   // Called on resume and every minute so a new day is picked up without a restart.
   var lastSeenDay = localToday();
   window.stationsRefresh = function () {
-    var changed = catchUp() > 0;
-    var now = localToday();
+    var changed = catchUp() > 0, now = localToday();
     if (changed || now !== lastSeenDay) {
       lastSeenDay = now;
-      var active = document.activeElement;
-      if (!(active && /^(INPUT|TEXTAREA)$/.test(active.tagName))) render();
+      var ae = document.activeElement;
+      if (!(ae && /^(INPUT|TEXTAREA)$/.test(ae.tagName))) render();
     }
   };
   document.addEventListener('visibilitychange', function () { if (!document.hidden) window.stationsRefresh(); });
   setInterval(window.stationsRefresh, 60000);
 
+  window.__improvementSha256 = sha256; // exposed for tests only
+
   catchUp();
   clampMin();
   purgeBlankNofap();
   save();
+  setBars();
   render();
 })();

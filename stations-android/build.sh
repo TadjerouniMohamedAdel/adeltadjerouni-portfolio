@@ -1,8 +1,10 @@
 #!/usr/bin/env bash
 # Builds a signed release APK without Gradle, using Ubuntu's Android SDK packages:
 #   sudo apt-get install android-sdk-platform-23 aapt dalvik-exchange zipalign apksigner
-# Output: build/stations-<version>.apk
-# Signing key: $STATIONS_KEYSTORE (default: ./stations-release.jks, created if missing).
+# Output: build/improvement-<version>.apk
+# Signing key: $STATIONS_KEYSTORE (default: ./stations-release.jks). A missing key is an error,
+# because an APK signed with a new key cannot update the installed app; set
+# STATIONS_NEW_KEY=1 to create one deliberately (first install only).
 set -euo pipefail
 cd "$(dirname "$0")"
 
@@ -26,6 +28,11 @@ aapt package -f -M AndroidManifest.xml -S res -A assets -I "$ANDROID_JAR" \
 
 zipalign -f -p 4 build/unaligned.apk build/aligned.apk
 
+if [ ! -f "$KEYSTORE" ] && [ "${STATIONS_NEW_KEY:-}" != "1" ]; then
+  echo "Signing key $KEYSTORE not found. Restore it (updates need the same key)," >&2
+  echo "or set STATIONS_NEW_KEY=1 to create a new one for a fresh install." >&2
+  exit 1
+fi
 if [ ! -f "$KEYSTORE" ]; then
   keytool -genkeypair -keystore "$KEYSTORE" -storepass "$KS_PASS" -keypass "$KS_PASS" \
     -alias stations -keyalg RSA -keysize 2048 -validity 10000 \
@@ -34,7 +41,7 @@ if [ ! -f "$KEYSTORE" ]; then
 fi
 
 apksigner sign --ks "$KEYSTORE" --ks-pass "pass:$KS_PASS" --ks-key-alias stations \
-  --min-sdk-version 23 --out "build/stations-$VERSION.apk" build/aligned.apk
-apksigner verify --min-sdk-version 23 "build/stations-$VERSION.apk"
+  --min-sdk-version 23 --out "build/improvement-$VERSION.apk" build/aligned.apk
+apksigner verify --min-sdk-version 23 "build/improvement-$VERSION.apk"
 rm -f build/unaligned.apk build/aligned.apk build/*.idsig
-echo "Built build/stations-$VERSION.apk"
+echo "Built build/improvement-$VERSION.apk"

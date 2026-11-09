@@ -15,7 +15,7 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 
-/** Hosts the bundled Stations UI (assets/index.html) in a full-screen WebView. */
+/** Hosts the bundled Improvement UI (assets/index.html) in a full-screen WebView. */
 public class MainActivity extends Activity {
 
     private static final int LIGHT_NAV_BAR = 0x10; // View.SYSTEM_UI_FLAG_LIGHT_NAVIGATION_BAR (API 26)
@@ -27,15 +27,11 @@ public class MainActivity extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        Window window = getWindow();
-        window.setStatusBarColor(Color.parseColor("#F3EFE6"));
-        window.setNavigationBarColor(Color.parseColor("#FFFDF8"));
-        int flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
-        if (Build.VERSION.SDK_INT >= 26) flags |= LIGHT_NAV_BAR;
-        window.getDecorView().setSystemUiVisibility(flags);
+        // The app starts on the (dark) lock screen; the page switches the bars when it unlocks.
+        applyBars(true);
 
         webView = new WebView(this);
-        webView.setBackgroundColor(Color.parseColor("#F3EFE6"));
+        webView.setBackgroundColor(Color.parseColor("#1D211C"));
         webView.setFitsSystemWindows(true);
         webView.setOverScrollMode(View.OVER_SCROLL_NEVER);
         webView.setVerticalScrollBarEnabled(false);
@@ -49,7 +45,7 @@ public class MainActivity extends Activity {
         s.setBuiltInZoomControls(false);
         s.setMediaPlaybackRequiresUserGesture(true);
 
-        webView.addJavascriptInterface(new Store(getSharedPreferences("stations", Context.MODE_PRIVATE)), "StationsStore");
+        webView.addJavascriptInterface(new Store(this, getSharedPreferences("stations", Context.MODE_PRIVATE)), "StationsStore");
         webView.setWebViewClient(new WebViewClient() {
             @Override
             @SuppressWarnings("deprecation") // compiled against API 23; newer WebViews still route here
@@ -60,6 +56,20 @@ public class MainActivity extends Activity {
 
         setContentView(webView);
         webView.loadUrl("file:///android_asset/index.html");
+    }
+
+    /** Dark system bars for the lock screen, light ones for the rest of the app. */
+    void applyBars(boolean dark) {
+        Window window = getWindow();
+        window.setStatusBarColor(Color.parseColor(dark ? "#1D211C" : "#F3EFE6"));
+        window.setNavigationBarColor(Color.parseColor(dark ? "#1D211C" : "#FFFDF8"));
+        int flags = 0;
+        if (!dark) {
+            flags = View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR;
+            if (Build.VERSION.SDK_INT >= 26) flags |= LIGHT_NAV_BAR;
+        }
+        window.getDecorView().setSystemUiVisibility(flags);
+        if (webView != null) webView.setBackgroundColor(Color.parseColor(dark ? "#1D211C" : "#F3EFE6"));
     }
 
     @Override
@@ -100,12 +110,14 @@ public class MainActivity extends Activity {
         super.onDestroy();
     }
 
-    /** Local persistence for the app state (a single JSON document). */
+    /** Local persistence for the app state (a single JSON document), plus system-bar styling. */
     static final class Store {
         private static final String KEY = "state";
+        private final MainActivity activity;
         private final SharedPreferences prefs;
 
-        Store(SharedPreferences prefs) {
+        Store(MainActivity activity, SharedPreferences prefs) {
+            this.activity = activity;
             this.prefs = prefs;
         }
 
@@ -117,6 +129,16 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public void save(String json) {
             prefs.edit().putString(KEY, json).commit();
+        }
+
+        @JavascriptInterface
+        public void setDarkBars(final boolean dark) {
+            activity.runOnUiThread(new Runnable() {
+                @Override
+                public void run() {
+                    activity.applyBars(dark);
+                }
+            });
         }
     }
 }
